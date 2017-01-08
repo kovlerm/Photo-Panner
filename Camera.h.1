@@ -1,0 +1,33 @@
+#ifndef CAMERA_H
+#define CAMERA_H
+
+class Camera
+{  
+public:
+  Camera();
+  
+  void Shoot(unsigned long); // Run shooter for miliseconds pin2
+  void Focus();         // Enforce focusing            pin1 
+   
+  bool isShooting();    // mode 
+  
+  unsigned long LeftShooting() // time left for exposure
+  
+  void loop( unsigned long);   // called from loop to update camera state.
+  
+  void DUMP(const char *szText /*= 0*/) const
+  
+private:
+  bool b_shoot = false; // shooting mode -T otherwise false
+  bool b_focus = false; // shooting mode -T otherwise false
+  unsigned long li_exp=0;    // current exposure
+  unsigned long li_tfocus=0; // focus timer   
+  const int CameraPin   =  2;      
+  const int FocusPin   =  1;
+  const unsigned long focus_time=300; // press focus for 300 msec
+  unsigned long exp_time=0; // press focus for 300 msec
+};
+
+
+#endif
+
