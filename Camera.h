@@ -21,6 +21,8 @@ public:
   uint16_t uMount;  
   /** Exposure in msec*/
   unsigned long ulExp;  
+  /** Number of shots for bracketing */
+  uint16_t uBrk;  
   
 #ifdef DEBUG
   void DUMP(const char *szText = 0) const;

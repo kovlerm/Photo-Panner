@@ -177,6 +177,7 @@ private:
   int iShots;
   int iStep;
   ListSpinnerWidget lwPos;     // list of focuses 
+  ListSpinnerWidget lwBrk;     // list of focuses 
 };
 
 

@@ -66,6 +66,7 @@ static const char szExposure[] = "Exposure";
 static const char szFocus[] = "Lens Focus";
 static const char szFocusCorrection[] = "Focus Adjustment";
 static const char szPos[] = "Position";
+static const char szBrk[] = "Bracketing";
 
 /**
  * 
@@ -311,7 +312,7 @@ bool MySettingsView::onKeyUp(uint8_t vk)
       g_settings.m_uFocus = atoi(lwFocus.m_items[m_settings.getValue(szFocus)->getCurSel()].c_str()) ; 
       g_settings.m_FocusCorrection=m_settings.getNumericValue(szFocusCorrection);
       g_pCam->uFocus=g_settings.m_uFocus+g_settings.m_FocusCorrection;
-      g_pCam->uMount=g_settings.m_uCameraMount = lwPos.getCurSel();      
+      g_pCam->uMount=g_settings.m_uCameraMount = m_settings.getValue(szPos)->getCurSel();      
       g_settings.m_uExp = m_settings.getNumericValue(szExposure); 
       g_pCam->ulExp=g_settings.m_uExp*1000;
       g_settings.m_uPannerFastSpeed = 3 * g_settings.m_uPannerSlowSpeed;
@@ -770,6 +771,8 @@ PanoramaView::PanoramaView() :
   addChild(&m_panorama);
   lwPos.m_items={"L","P"};
   lwPos.setCurSel(0);
+  lwBrk.m_items={"No","3","5","7"};
+  lwBrk.setCurSel(0);
 }
 
 bool PanoramaView::onKeyAutoRepeat(uint8_t vk)
@@ -851,9 +854,16 @@ bool PanoramaView::onKeyUp(uint8_t vk)
         break;
     case VK_SEL: {
       g_pCam->uFocus = m_panorama.getNumericValue(szFocus); 
-      g_pCam->uMount= lwPos.getCurSel();      
-      g_pCam->ulExp=m_panorama.getNumericValue(szExposure)*1000;    
-    
+      g_pCam->uMount= m_panorama.getValue(szPos)->getCurSel();      
+      g_pCam->ulExp=m_panorama.getNumericValue(szExposure)*1000;  
+      uint16_t u_cp=m_panorama.getValue(szBrk)->getCurSel();;
+      g_pCam->uBrk= u_cp*2+1;       
+      DEBUG_PRINTLN("Bracketing");
+      DEBUG_PRINTDEC(g_pCam->uBrk);
+      DEBUG_PRINTLN(" ");
+      DEBUG_PRINTLN("u_cp");
+      DEBUG_PRINTDEC(u_cp);
+      DEBUG_PRINTLN(" ");       
     
       /**  Calculate angles     */
   
@@ -892,16 +902,55 @@ bool PanoramaView::onKeyUp(uint8_t vk)
       pan_cmds[step++] = {chControl, cmdControlWaitForCompletion,  50000};                         // wait for the movement to be completed for 50 sec
       pan_cmds[step++] = {chControl, cmdControlRest,  200};                                         // deep breath before shooting
       pan_cmds[step++] = {chPan, cmdShootOn,  0};                                                   // fire
-      pan_cmds[step++] = {chControl, cmdControlRest, g_pCam->ulExp};                                // exposure
-      pan_cmds[step++] = {chPan, cmdShootOff, 0};                                                   // gun down
-      for( int a = 0; a <= iShots; a = a + 1 ) {
+      // loop for bracketing
+      DEBUG_PRINTLN("Bracketing loop");
+      for( int b = 0; b < g_pCam->uBrk; b = b + 1 ) {
+          DEBUG_PRINTDEC(b+1);
+          DEBUG_PRINT(" Exposure "); 
+          if (g_pCam->ulExp == 0) { // exposure managed by camera < 1 sec
+            pan_cmds[step++] = {chControl, cmdControlRest, 200};                                       // very quick exposure
+            pan_cmds[step++] = {chPan, cmdShootOff, 0};
+            pan_cmds[step++] = {chControl, cmdControlRest, 2000};                                      // wait 2 sec
+          }
+          else { 
+            unsigned long uCExp;
+            uint16_t myPowerOfTwo = (uint16_t) (1 << abs(b-u_cp));
+            if (b<u_cp) uCExp=g_pCam->ulExp/myPowerOfTwo;
+            else if (b==u_cp) uCExp=g_pCam->ulExp;  
+            else uCExp=g_pCam->ulExp*myPowerOfTwo;     
+            DEBUG_PRINTDEC(uCExp);
+            DEBUG_PRINTLN(" ");             
+            pan_cmds[step++] = {chControl, cmdControlRest, uCExp};                                // exposure
+            pan_cmds[step++] = {chPan, cmdShootOff, 0};                                                   // gun down
+          } 
+      }      
+      for( int a = 0; a < iShots; a = a + 1 ) {
         //pan_cmds[step++] = {chPan,     cmdGo, {.m_lPosition=(long)iStep}};                        //go to next point of shooting
         pan_cmds[step] = {chPan,     cmdGo, 0}; pan_cmds[step].m_lPosition=(long) iStep; step++;    //go to next point of shooting
         pan_cmds[step++] = {chControl, cmdControlWaitForCompletion,  50000};                        // wait for the movement to be completed for 5 sec
         pan_cmds[step++] = {chControl, cmdControlRest,  200};                                       // deep breath before shooting
         pan_cmds[step++] = {chPan, cmdShootOn,  0};                                                 // fire
-        pan_cmds[step++] = {chControl, cmdControlRest, g_pCam->ulExp};           // exposure
-        pan_cmds[step++] = {chPan, cmdShootOff, 0};                                                 // gun down  
+        // loop for bracketing
+        
+      
+        for( int b = 0; b < g_pCam->uBrk; b = b + 1 ) {
+        
+            if (g_pCam->ulExp == 0) { // exposure managed by camera < 1 sec
+                pan_cmds[step++] = {chControl, cmdControlRest, 200};                                       // very quick exposure
+                pan_cmds[step++] = {chPan, cmdShootOff, 0};
+                pan_cmds[step++] = {chControl, cmdControlRest, 2000};                                      // wait 2 sec
+            }
+            else { 
+                unsigned long uCExp;
+                uint16_t myPowerOfTwo = (uint16_t) (1 << abs(b-u_cp));
+                if (b<u_cp) uCExp=g_pCam->ulExp/myPowerOfTwo;
+                else if (b==u_cp) uCExp=g_pCam->ulExp;  
+                else uCExp=g_pCam->ulExp*myPowerOfTwo; 
+                                
+                pan_cmds[step++] = {chControl, cmdControlRest, uCExp};                                // exposure
+                pan_cmds[step++] = {chPan, cmdShootOff, 0};                                                   // gun down
+            } 
+        }                                                    // gun down  
       };
       pan_cmds[step++] = {chControl, cmdControlRest,  1000}; 
       pan_cmds[step++] = {chControl, cmdControlEndLoop, 0};
@@ -991,10 +1040,10 @@ void PanoramaView::onActivate(View *pPrevActive)
     m_panorama.push_back(" Camera Settings");
     m_panorama.push_back(szFocus, (long)(g_pCam->uFocus));
     lwPos.setCurSel(g_pCam->uMount);
-    m_panorama.push_back(szPos, lwPos);
-    
-    m_panorama.push_back(" ");
+    m_panorama.push_back(szPos, lwPos); 
     m_panorama.push_back(szExposure, (long)g_pCam->ulExp/1000); 
+    m_panorama.push_back(szBrk, lwBrk);
+    lwPos.setCurSel(g_pCam->uBrk/2);
     m_panorama.setCurSel(1);
   }
   

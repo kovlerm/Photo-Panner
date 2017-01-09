@@ -11,6 +11,7 @@ Camera::Camera()
     uFocus=g_settings.m_uFocus+g_settings.m_FocusCorrection;
     uMount=g_settings.m_uCameraMount;
     ulExp=g_settings.m_uExp*1000000;
+    uBrk=1;
 }
 
 Camera::Camera(uint16_t fcs,uint16_t mnt,uint16_t exp) // Focus (mm), Mount 0-Portrait/1-Landscape,  Exposure in sec 
@@ -23,6 +24,7 @@ Camera::Camera(uint16_t fcs,uint16_t mnt,uint16_t exp) // Focus (mm), Mount 0-Po
     digitalWrite(FocusPin, LOW);
     uFocus=fcs;
     uMount=mnt;
+    uBrk=1;
     ulExp=exp*1000;
 }
 
