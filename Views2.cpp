@@ -522,11 +522,18 @@ bool ControlView::onJoy(uint8_t vk, int v)
       // start pan left
       DEBUG_PRINTLN("ControlView::onKeyDown(VK_LEFT): start pan left");
       g_pPanner->setSpeed((float)v*(float)g_settings.m_uPannerFastSpeed/100.0);
+      DEBUG_PRINT("Speed: ");
+      DEBUG_PRINTDEC((int)g_pPanner->speed());	
+      DEBUG_PRINTLN("Steps per Sec");
       break;
     case VK_RIGHT:
       // start pan right
       g_pPanner->setSpeed((float)v*(float)-g_settings.m_uPannerFastSpeed/100.0);
       DEBUG_PRINTLN("ControlView::onKeyDown(VK_RIGHT): start pan right");
+      DEBUG_PRINT("Speed: ");
+      DEBUG_PRINTDEC((int)g_pPanner->speed());	
+      DEBUG_PRINTLN("Steps per Sec");
+
       break;
     default:
       return false;
