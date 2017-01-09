@@ -3,8 +3,10 @@
 
 class Camera
 {  
+
 public:
-  Camera();
+  Camera(); // copy from permanent settings
+  Camera(uint16_t,uint16_t,uint16_t); // Focus (mm), Mount 0-Portrait/1-Landscape,  Exposure in sec
   
   void ShootOn();  // Run shooter for miliseconds pin2
   void ShootOff(); // Run shooter for miliseconds pin2
@@ -13,7 +15,19 @@ public:
    
   bool isShooting();    // mode 
   
-  void DUMP(const char *szText /*= 0*/) const;
+  /** Lens Focus Distance mm */
+  uint16_t uFocus;
+  /** Camera mounted in position 0-Portrait, 1-Landscape (Will get from sensor later) */
+  uint16_t uMount;  
+  /** Exposure in msec*/
+  unsigned long ulExp;  
+  
+#ifdef DEBUG
+  void DUMP(const char *szText = 0) const;
+#else
+  void DUMP(const char *szText = 0) {}
+#endif
+
   
 private:
   bool b_shoot = false; // shooting mode -T otherwise false

@@ -15,7 +15,9 @@
  */
 View *View::g_pActiveView = 0;
 View *View::g_pPreviousView = 0;
+View *View::g_pPrevPreviousView = 0;
 Stepper *View::g_pPanner = 0;
+Camera *View::g_pCam = 0;
 unsigned long View::m_ulToUpdate = 0;
 
 
@@ -63,6 +65,7 @@ void View::setup()
     g_pPanner->setMaxSpeed(g_settings.m_uPannerMaxSpeed);
     g_pPanner->setAcceleration(g_settings.m_uPannerAcceleration);
   }
+  g_pCam = g_ci.getCamera();
 
 }
 
@@ -82,6 +85,7 @@ void View::activate(View *p)
   }
   if(p != 0)
   {
+    g_pPrevPreviousView = g_pPreviousView;
     p->onActivate(g_pPreviousView = g_pActiveView);
     g_pActiveView = p;
     p->update(millis());
@@ -271,7 +275,7 @@ bool View::onJoy(uint8_t vk, int v)
 }
 bool View::onKeyInactive()
 {
-  DEBUG_PRINTLN("View::onKeyInactive() => true");
+  //DEBUG_PRINTLN("View::onKeyInactive() => true");
   return true;
 }
 

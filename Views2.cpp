@@ -309,8 +309,11 @@ bool MySettingsView::onKeyUp(uint8_t vk)
     case VK_SOFTB: {
       // save settings!  
       g_settings.m_uFocus = atoi(lwFocus.m_items[m_settings.getValue(szFocus)->getCurSel()].c_str()) ; 
-      g_settings.m_uCameraMount = lwPos.getCurSel(); 
+      g_settings.m_FocusCorrection=m_settings.getNumericValue(szFocusCorrection);
+      g_pCam->uFocus=g_settings.m_uFocus+g_settings.m_FocusCorrection;
+      g_pCam->uMount=g_settings.m_uCameraMount = lwPos.getCurSel();      
       g_settings.m_uExp = m_settings.getNumericValue(szExposure); 
+      g_pCam->ulExp=g_settings.m_uExp*1000;
       g_settings.m_uPannerFastSpeed = 3 * g_settings.m_uPannerSlowSpeed;
       g_pPanner->setMaxSpeed(g_settings.m_uPannerMaxSpeed = m_settings.getNumericValue(szPanMaxSpeed));
       g_pPanner->setAcceleration(g_settings.m_uPannerAcceleration = m_settings.getNumericValue(szPanAcceleration));
@@ -580,7 +583,7 @@ bool ControlView::onKeyUp(uint8_t vk)
 
 void ControlView::updateClient(unsigned long now)
 {
-  DEBUG_PRINTLN("ControlView::updateClient()");
+  //DEBUG_PRINTLN("ControlView::updateClient()");
   updateClientRunOrPaused(now, false, m_strMessage.c_str());
 }
 
@@ -769,6 +772,31 @@ PanoramaView::PanoramaView() :
   lwPos.setCurSel(0);
 }
 
+bool PanoramaView::onKeyAutoRepeat(uint8_t vk)
+{
+  switch(vk) {
+    case VK_UP: {
+      DEBUG_PRINTLN("SettingsView::onKeyAutoRepeat(VK_UP)");
+      //m_settings.setCurValue(m_settings.getCurValue() + 1);
+      ListSpinnerWidget *p = m_panorama.getCurValue();
+      if(p != 0)
+        p->advanceSelection(1);
+      break;
+    }
+    case VK_DOWN: {
+      DEBUG_PRINTLN("SettingsView::onKeyAutoRepeat(VK_DOWN)");
+      //m_settings.setCurValue(m_settings.getCurValue() - 1);
+      ListSpinnerWidget *p = m_panorama.getCurValue();
+      if(p != 0)
+        p->advanceSelection(-1);
+      break;
+    }
+    default:
+      return false;
+  }  
+  return true;
+}
+
 /**
  * analog keyboard APIs where vk is one of VK_xxx 
  */
@@ -791,32 +819,98 @@ bool PanoramaView::onKeyDown(uint8_t vk)
   return true;
 }
 
+
+
 bool PanoramaView::onKeyUp(uint8_t vk)
 {
   switch(vk) {
-    case VK_RIGHT: 
-    case VK_DOWN: 
-      m_wpoints.advanceSelection(1);
-      break;
-    case VK_LEFT: 
-    case VK_UP: 
-      m_wpoints.advanceSelection(-1);
-      break;
-
+    case VK_LEFT:
+        m_panorama.advanceSelection(-1); 
+        break;    
+    case VK_RIGHT:
+        m_panorama.advanceSelection(1); 
+        break;      
+    case VK_DOWN: {
+        ListSpinnerWidget *p = m_panorama.getCurValue();
+        if(p != 0) p->advanceSelection(-1);
+        break;
+    }    
+    case VK_UP: {
+        ListSpinnerWidget *p = m_panorama.getCurValue();
+        if(p != 0) p->advanceSelection(1);
+        break;
+    }    
     case VK_SOFTA:
-      DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SOFTA): switch to Control view");
-      activate(&g_waypointsView);
-      break;
+        DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SOFTA): switch to Control view");
+        activate(&g_waypointsView);
+        break;
     case VK_SOFTB:
-      // switch to Edit view
-      DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SOFTB): switch to Edit view");
-      activate(&g_editView);
-      break;
-    case VK_SEL:
+        // switch to Edit view
+        DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SOFTB): switch to Edit view");
+        activate(&g_editView);
+        break;
+    case VK_SEL: {
+      g_pCam->uFocus = m_panorama.getNumericValue(szFocus); 
+      g_pCam->uMount= lwPos.getCurSel();      
+      g_pCam->ulExp=m_panorama.getNumericValue(szExposure)*1000;    
+    
+    
+      /**  Calculate angles     */
+  
+      // Camera view angle
+      fMtrx=36.0;
+      if (g_pCam->uMount) fMtrx=24.0;
+      fAngCam=2.0*atan(fMtrx/(2*(g_pCam->uFocus)));
+      
+      fAngCam*=180/3.1415926535897;
+      DEBUG_PRINTLN("Camera Angle");
+      DEBUG_PRINTDEC(fAngCam);
+      DEBUG_PRINTLN(" ");
+      // Panorama angle
+      fAngPan=0.36*abs(g_pPanner->m_wayPoints["A"]-g_pPanner->m_wayPoints["B"]);
+      DEBUG_PRINTLN("Panorama Angle");
+      DEBUG_PRINTDEC(fAngPan);
+      DEBUG_PRINTLN(" ");
+      // step angle
+      iShots=(fAngCam+fAngPan)/((1.0-0.3)*fAngCam)+1;
+      DEBUG_PRINTLN("Number of SHots");
+      DEBUG_PRINTDEC(iShots);
+      DEBUG_PRINTLN(" ");
+      // step delta
+      iStep=(g_pPanner->m_wayPoints["B"]-g_pPanner->m_wayPoints["A"])/iShots;
+      DEBUG_PRINTLN("Number of steps");
+      DEBUG_PRINTDEC(iStep);
+      DEBUG_PRINTLN(" ");
+      // Create Program 
+      int step=0;
+      //test A={.m_szParam={'A'}};   Test for Union needs to be removed
+      pan_cmds[step] = {chPan,     cmdSetMaxSpeed, (unsigned long)g_pPanner->getMaxSpeed()};
+      pan_cmds[step++] = {chPan,     cmdSetAcceleration, 100};
+      pan_cmds[step++] = {chControl, cmdControlBeginLoop, 0};
+      //pan_cmds[step++] = {chPan,     cmdGoToWaypoint, {.m_lPosition='A'}};                        // go to left corner
+      pan_cmds[step] = {chPan,     cmdGoToWaypoint, 1}; pan_cmds[step].m_szParam[0]='A'; step++;    // go to left corner
+      pan_cmds[step++] = {chControl, cmdControlWaitForCompletion,  50000};                         // wait for the movement to be completed for 50 sec
+      pan_cmds[step++] = {chControl, cmdControlRest,  200};                                         // deep breath before shooting
+      pan_cmds[step++] = {chPan, cmdShootOn,  0};                                                   // fire
+      pan_cmds[step++] = {chControl, cmdControlRest, g_pCam->ulExp};                                // exposure
+      pan_cmds[step++] = {chPan, cmdShootOff, 0};                                                   // gun down
+      for( int a = 0; a <= iShots; a = a + 1 ) {
+        //pan_cmds[step++] = {chPan,     cmdGo, {.m_lPosition=(long)iStep}};                        //go to next point of shooting
+        pan_cmds[step] = {chPan,     cmdGo, 0}; pan_cmds[step].m_lPosition=(long) iStep; step++;    //go to next point of shooting
+        pan_cmds[step++] = {chControl, cmdControlWaitForCompletion,  50000};                        // wait for the movement to be completed for 5 sec
+        pan_cmds[step++] = {chControl, cmdControlRest,  200};                                       // deep breath before shooting
+        pan_cmds[step++] = {chPan, cmdShootOn,  0};                                                 // fire
+        pan_cmds[step++] = {chControl, cmdControlRest, g_pCam->ulExp};           // exposure
+        pan_cmds[step++] = {chPan, cmdShootOff, 0};                                                 // gun down  
+      };
+      pan_cmds[step++] = {chControl, cmdControlRest,  1000}; 
+      pan_cmds[step++] = {chControl, cmdControlEndLoop, 0};
+      pan_cmds[step++] = {chControl, cmdControlNone,    0};
       DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SEL)");
       // Run Program 
       activate(&g_runPView);
       break;
+    }  
     default:
       return false;
   }
@@ -895,12 +989,12 @@ void PanoramaView::onActivate(View *pPrevActive)
   // fill m_settings
   {
     m_panorama.push_back(" Camera Settings");
-    m_panorama.push_back(szFocus, (long)(g_settings.m_uFocus+g_settings.m_FocusCorrection));
-    lwPos.setCurSel(g_settings.m_uCameraMount);
+    m_panorama.push_back(szFocus, (long)(g_pCam->uFocus));
+    lwPos.setCurSel(g_pCam->uMount);
     m_panorama.push_back(szPos, lwPos);
     
     m_panorama.push_back(" ");
-    m_panorama.push_back(szExposure, (long)g_settings.m_uExp); 
+    m_panorama.push_back(szExposure, (long)g_pCam->ulExp/1000); 
     m_panorama.setCurSel(1);
   }
   
@@ -956,58 +1050,6 @@ void PanoramaView::onActivate(View *pPrevActive)
       // Move to Corner 1
       g_pPanner->setSpeed((float)g_settings.m_uPannerMaxSpeed);
       g_pPanner->moveToWayPoint("A");
-  
-      /**  Calculate angles     */
-      
-      // Camera view angle
-      fMtrx=36.0;
-      if (g_settings.m_uCameraMount) fMtrx=24.0;
-      fAngCam=2.0*atan(fMtrx/(2*(g_settings.m_uFocus+g_settings.m_FocusCorrection)));
-      
-      fAngCam*=180/3.1415926535897;
-      DEBUG_PRINTLN("Camera Angle");
-      DEBUG_PRINTDEC(fAngCam);
-      DEBUG_PRINTLN(" ");
-      // Panorama angle
-      fAngPan=0.36*abs(g_pPanner->m_wayPoints["A"]-g_pPanner->m_wayPoints["B"]);
-      DEBUG_PRINTLN("Panorama Angle");
-      DEBUG_PRINTDEC(fAngPan);
-      DEBUG_PRINTLN(" ");
-      // step angle
-      iShots=(fAngCam+fAngPan)/((1.0-0.3)*fAngCam)+1;
-      DEBUG_PRINTLN("Number of SHots");
-      DEBUG_PRINTDEC(iShots);
-      DEBUG_PRINTLN(" ");
-      // step delta
-      iStep=(g_pPanner->m_wayPoints["B"]-g_pPanner->m_wayPoints["A"])/iShots;
-      DEBUG_PRINTLN("Number of steps");
-      DEBUG_PRINTDEC(iStep);
-      DEBUG_PRINTLN(" ");
-      // Create Program 
-      int step=0;
-      //test A={.m_szParam={'A'}};   Test for Union needs to be removed
-      pan_cmds[step] = {chPan,     cmdSetMaxSpeed, (unsigned long)g_pPanner->getMaxSpeed()};
-      pan_cmds[step++] = {chPan,     cmdSetAcceleration, 100};
-      pan_cmds[step++] = {chControl, cmdControlBeginLoop, 0};
-      //pan_cmds[step++] = {chPan,     cmdGoToWaypoint, {.m_lPosition='A'}};                        // go to left corner
-      pan_cmds[step] = {chPan,     cmdGoToWaypoint, 1}; pan_cmds[step].m_szParam[0]='A'; step++;    // go to left corner
-      pan_cmds[step++] = {chControl, cmdControlWaitForCompletion,  500000};                         // wait for the movement to be completed for 50 sec
-      pan_cmds[step++] = {chControl, cmdControlRest,  200};                                         // deep breath before shooting
-      pan_cmds[step++] = {chPan, cmdShootOn,  0};                                                   // fire
-      pan_cmds[step++] = {chControl, cmdControlRest, (unsigned long)g_settings.m_uExp};             // exposure
-      pan_cmds[step++] = {chPan, cmdShootOff, 0};                                                   // gun down
-      for( int a = 0; a <= iShots; a = a + 1 ) {
-        //pan_cmds[step++] = {chPan,     cmdGo, {.m_lPosition=(long)iStep}};                        //go to next point of shooting
-        pan_cmds[step] = {chPan,     cmdGo, 0}; pan_cmds[step].m_lPosition=(long) iStep; step++;    //go to next point of shooting
-        pan_cmds[step++] = {chControl, cmdControlWaitForCompletion,  50000};                        // wait for the movement to be completed for 5 sec
-        pan_cmds[step++] = {chControl, cmdControlRest,  200};                                       // deep breath before shooting
-        pan_cmds[step++] = {chPan, cmdShootOn,  0};                                                 // fire
-        pan_cmds[step++] = {chControl, cmdControlRest, (unsigned long)g_settings.m_uExp};           // exposure
-        pan_cmds[step++] = {chPan, cmdShootOff, 0};                                                 // gun down  
-      };
-      pan_cmds[step++] = {chControl, cmdControlRest,  50000}; 
-      pan_cmds[step++] = {chControl, cmdControlEndLoop, 0};
-      pan_cmds[step++] = {chControl, cmdControlNone,    0};
   }    
   
   
@@ -1450,7 +1492,8 @@ bool PausedRunView::onKeyUp(uint8_t vk)
     case VK_SOFTB:
       DEBUG_PRINTLN("PausedRunView::onKeyUp(VK_SOFTB): stop and switch to Run view");
       // stop program execution here!
-      activate(&g_editView);
+      activate(g_pPrevPreviousView);
+      
       break;
     default:
       return false;

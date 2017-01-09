@@ -8,8 +8,23 @@ Camera::Camera()
     pinMode (FocusPin, OUTPUT);
     digitalWrite(CameraPin, LOW);
     digitalWrite(FocusPin, LOW);
+    uFocus=g_settings.m_uFocus+g_settings.m_FocusCorrection;
+    uMount=g_settings.m_uCameraMount;
+    ulExp=g_settings.m_uExp*1000000;
 }
 
+Camera::Camera(uint16_t fcs,uint16_t mnt,uint16_t exp) // Focus (mm), Mount 0-Portrait/1-Landscape,  Exposure in sec 
+{
+    CameraPin=pinCamera;
+    FocusPin=pinFocus;
+    pinMode (CameraPin, OUTPUT);
+    pinMode (FocusPin, OUTPUT);
+    digitalWrite(CameraPin, LOW);
+    digitalWrite(FocusPin, LOW);
+    uFocus=fcs;
+    uMount=mnt;
+    ulExp=exp*1000;
+}
 
 void Camera::ShootOn()
 {

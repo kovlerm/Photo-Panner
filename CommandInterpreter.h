@@ -126,7 +126,7 @@ protected:
    */
    
   Stepper m_motor;
-  Camera g_cam;
+  Camera m_cam;
 
 public:
   CommandInterpreterChannel(uint8_t pinStep, uint8_t pinDirection, uint8_t pinEnable = 0xFF);
@@ -138,6 +138,8 @@ public:
   long getMotorPosition() {
     return m_motor.currentPosition();
   }
+  
+  bool isShooting() {return m_cam.isShooting();}
 
   /**
    * may communicate with hardware
@@ -187,6 +189,10 @@ public:
 
   Stepper *getMotor() {
     return &m_motor;
+  }
+  
+  Camera *getCam() {
+    return &m_cam;
   }
   
 };
@@ -276,6 +282,11 @@ public:
   Stepper *getPanner() {
     return m_channels[chPan]->getMotor();
   }
+  
+  Camera *getCamera() {
+    return m_channels[chPan]->getCam();
+  }
+
 
 
 private:

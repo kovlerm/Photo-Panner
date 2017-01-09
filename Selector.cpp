@@ -2,7 +2,8 @@
 
 SELECTOR::SELECTOR(){};
 
-void SELECTOR::upd(unsigned long int ulNow, unsigned int bC, unsigned int bZ, int JoyX, int JoyY) {
+void SELECTOR::loop(unsigned long int ulNow, unsigned int bC, unsigned int bZ, int JoyX, int JoyY) {
+
     if (!bZ && !bC) {
         // Momentary reading 
         if (JoyY>40) {

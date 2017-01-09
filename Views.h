@@ -19,6 +19,7 @@ class View : public Widget
 {
 protected:
   static Stepper *g_pPanner;
+  static Camera *g_pCam;
   
   bool m_bEraseBkgnd = true;
   const char *m_szTitle;
@@ -56,8 +57,10 @@ public:
   
   /** The Active View */
   static View *g_pActiveView;
-  /** The Previous View */
+  /** The Previous View n-1 */
   static View *g_pPreviousView;
+  /** The Prev Previous View n-2 */
+  static View *g_pPrevPreviousView;
   
   /** once in application lifetime initialization */  
   static void setup();

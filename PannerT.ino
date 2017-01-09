@@ -1,12 +1,15 @@
-/********************************************************\
+/********************************************************
+ *  Photo panner and smart timer                        *    
+ *                                                      *    
+ *  By M.Kovler                                         *    
+ *                                                      *    
+ *  Branch of:                                          * 
+ *  Simple automated video panner                       *
+ *  Alex Sokolsky                                       *    
  *                                                      *
-   Simple automated video panner
+ *    v0.1  1/7/2017                                    *    
  *                                                      *
-   Alex Sokolsky
- *                                                      *
-     v0.1  6/23/2016
- *                                                      *
-  \********************************************************/
+ ********************************************************/
 #include "Wire.h"
 extern TwoWire Wire1;
 #include "Panner.h"
@@ -53,7 +56,7 @@ const uint8_t pinPanDirection = 6;
 int varx,vary; // wii joystick position
 
 
-class TstSel: public SELECTOR {
+class g_wiiJoy: public SELECTOR {
  /** define some values for button (key) scan codes */
   const uint8_t VK_NONE = 0;
   const uint8_t VK_RIGHT = 1;
@@ -73,17 +76,17 @@ class TstSel: public SELECTOR {
   virtual bool onKeyInactive();
   */
 
-  void onC() {Serial.println();Serial.println("PRESSED C"); Serial.println();};            // C pressed
+  // void onC() {Serial.println();Serial.println("PRESSED C"); Serial.println();};            // C pressed
   void onZ_Up() {Serial.println();Serial.println("PRESSED Z"); Serial.println(); View::g_pActiveView->onKeyUp(VK_SEL);};            // Z Unpressed
   void onZ_Down() {Serial.println();Serial.println("PRESSED Z"); Serial.println(); View::g_pActiveView->onKeyDown(VK_SEL);};          // Z pressed
-  void onLongC() {Serial.println();Serial.println("PRESSED Long C"); Serial.println();};       // C Long pressed
+  // void onLongC() {Serial.println();Serial.println("PRESSED Long C"); Serial.println();};       // C Long pressed
   void onLongZ() {Serial.println();Serial.println("PRESSED Long Z"); Serial.println(); View::g_pActiveView->onLongKeyDown(VK_SEL);};       // Z Long pressed SEL Long
    
   
-  void onLeft() {Serial.println();Serial.println("Left"); Serial.println(); };             // Left pressed
-  void onRight() {Serial.println();Serial.println("Right"); Serial.println();};           // Right pressed
-  void onUp() {Serial.println();Serial.println("Up"); Serial.println();  };                 // Up pressed
-  void onDown() {Serial.println();Serial.println("Down"); Serial.println(); };             // Down pressed
+  // void onLeft() {Serial.println();Serial.println("Left"); Serial.println(); };             // Left pressed
+  // void onRight() {Serial.println();Serial.println("Right"); Serial.println();};           // Right pressed
+  // void onUp() {Serial.println();Serial.println("Up"); Serial.println();  };                 // Up pressed
+  // void onDown() {Serial.println();Serial.println("Down"); Serial.println(); };             // Down pressed
    
   // momentary    
   void onMLeft(int v) {Serial.println();Serial.print("MLeft Start  "); Serial.println(v);View::g_pActiveView->onJoy(VK_LEFT,v); };      // Left pressed
@@ -101,7 +104,7 @@ class TstSel: public SELECTOR {
   void onMRightStop() {Serial.println();Serial.println("MRight Stop"); Serial.println(); View::g_pActiveView->onKeyUp(VK_RIGHT);};         // Right pressed
   void onMUpStop() {Serial.println();Serial.println("MUp Stop"); Serial.println();  View::g_pActiveView->onKeyUp(VK_UP);};                 // Up pressed
   void onMDownStop() {Serial.println();Serial.println("MDown Stop"); Serial.println(); View::g_pActiveView->onKeyUp(VK_DOWN);};                 // Down pressed
-
+   
   void onRepLeft() {Serial.println();Serial.println("Left Repeat"); Serial.println(); View::g_pActiveView->onKeyAutoRepeat(VK_LEFT);};     // Left Repeat pressed
   void onRepRight()  {Serial.println();Serial.println("Right Repeat"); Serial.println(); View::g_pActiveView->onKeyAutoRepeat(VK_RIGHT);};   // Right Repeat pressed
   void onRepUp() {Serial.println();Serial.println("Up Repeat"); Serial.println(); View::g_pActiveView->onKeyAutoRepeat(VK_UP);};       // Up Repeat pressed
@@ -112,30 +115,30 @@ class TstSel: public SELECTOR {
   void onCUp() {Serial.println();Serial.println("CUp"); Serial.println(); View::g_pActiveView->onKeyUp(VK_SOFTA);};                 // Up pressed
   void onCDown() {Serial.println();Serial.println("CDown"); Serial.println(); View::g_pActiveView->onKeyUp(VK_SOFTB);};             // Down pressed
 
-  void onZLeft() {Serial.println();Serial.println("ZLeft"); Serial.println();};             // Left pressed
-  void onZRight() {Serial.println();Serial.println("ZRight"); Serial.println();};           // Right pressed
-  void onZUp() {Serial.println();Serial.println("ZUp"); Serial.println(); };                 // Up pressed
-  void onZDown() {Serial.println();Serial.println("ZDown"); Serial.println();};             // Down pressed
+  // void onZLeft() {Serial.println();Serial.println("ZLeft"); Serial.println();};             // Left pressed
+  // void onZRight() {Serial.println();Serial.println("ZRight"); Serial.println();};           // Right pressed
+  // void onZUp() {Serial.println();Serial.println("ZUp"); Serial.println(); };                 // Up pressed
+  // void onZDown() {Serial.println();Serial.println("ZDown"); Serial.println();};             // Down pressed
 
   void onCLongLeft() {Serial.println();Serial.println("Long CLeft"); Serial.println(); View::g_pActiveView->onLongKeyDown(VK_SOFTA);};             // Left pressed
   void onCLongRight() {Serial.println();Serial.println("Long CRight"); Serial.println(); View::g_pActiveView->onLongKeyDown(VK_SOFTB);};           // Right pressed
   void onCLongUp() {Serial.println();Serial.println("Long CUp"); Serial.println(); View::g_pActiveView->onLongKeyDown(VK_SOFTA);};                 // Up pressed
   void onCLongDown() {Serial.println();Serial.println("Long CDown"); Serial.println(); View::g_pActiveView->onLongKeyDown(VK_SOFTB);};             // Down pressed
 
-  void onZLongLeft() {Serial.println();Serial.println("Long ZLeft"); Serial.println();};             // Left pressed
-  void onZLongRight() {Serial.println();Serial.println("Long ZRight"); Serial.println();};           // Right pressed
-  void onZLongUp() {Serial.println();Serial.println("Long ZUp"); Serial.println();};                 // Up pressed
-  void onZLongDown() {Serial.println();Serial.println("Long ZDown"); Serial.println();};             // Down pressed
+  // void onZLongLeft() {Serial.println();Serial.println("Long ZLeft"); Serial.println();};             // Left pressed
+  // void onZLongRight() {Serial.println();Serial.println("Long ZRight"); Serial.println();};           // Right pressed
+  // void onZLongUp() {Serial.println();Serial.println("Long ZUp"); Serial.println();};                 // Up pressed
+  // void onZLongDown() {Serial.println();Serial.println("Long ZDown"); Serial.println();};             // Down pressed
 
-  void onLongLeft() {Serial.println();Serial.println("Long Left"); Serial.println(); };    // Left Long pressed
-  void onLongRight()  {Serial.println();Serial.println("Long Right"); Serial.println();}; // Right long pressed
+  // void onLongLeft() {Serial.println();Serial.println("Long Left"); Serial.println(); };    // Left Long pressed
+  // void onLongRight()  {Serial.println();Serial.println("Long Right"); Serial.println();}; // Right long pressed
 
-  void onLongUp() {Serial.println();Serial.println("Long Up"); Serial.println();};        // Up Long pressed
-  void onLongDown() {Serial.println();Serial.println("Long Down"); Serial.println();};    // Down Long pressed 
+  // void onLongUp() {Serial.println();Serial.println("Long Up"); Serial.println();};        // Up Long pressed
+  // void onLongDown() {Serial.println();Serial.println("Long Down"); Serial.println();};    // Down Long pressed 
 };
 
 
- TstSel W;
+ g_wiiJoy W;
 
 
 
@@ -219,7 +222,9 @@ void loop()
   unsigned long now = millis();
 
  // Get wii nunchuck data
+ 
  delay(1);
+ 
   if (nunchuk_get_data()) {
     // 100 is the distance from 0 on the joystick but safe to take 90 as max value
     varx = nunchuk_cjoy_x(); // nunchuk.analogX is the value of the x-axis
@@ -227,25 +232,24 @@ void loop()
 //    Serial.print("JoyX:");Serial.print(varx);Serial.print("\t| ");
 //    Serial.print("JoyY:");Serial.print(vary);Serial.print("\t| ");
 
-/*    
-    if (nunchuk_cbutton())
-      Serial.print("C");
-    else
-      Serial.print("-");
-    if (nunchuk_zbutton())
-      Serial.print("Z");
-    else
-      Serial.print("-");
-    Serial.println();
-*/    
+    
+    // if (nunchuk_cbutton())
+      // Serial.print("C");
+    // else
+      // Serial.print("-");
+    // if (nunchuk_zbutton())
+      // Serial.print("Z");
+    // else
+      // Serial.print("-");
+    // Serial.println();
+   
   }
   else {
     Serial.println("Cannot communicate to wiichuck"); 
   };
 
-  W.upd(now, nunchuk_cbutton(),nunchuk_zbutton(),varx,vary);  
+  W.loop(now, nunchuk_cbutton(),nunchuk_zbutton(),varx,vary);  
   
-
 
   bool bUpdateDisplay = false;
   if (View::g_pActiveView != 0)

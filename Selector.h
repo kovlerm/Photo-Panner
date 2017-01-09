@@ -83,7 +83,7 @@ public:
   virtual void onZRepDown() {};
 
   // timer, C state (0-1), Z state (0-1), JoyX value (0-100), JoyY value (0-100) 
-  void upd(unsigned long int, unsigned int, unsigned int, int, int);
+  void loop(unsigned long int, unsigned int, unsigned int, int, int);
     
   SELECTOR();
 

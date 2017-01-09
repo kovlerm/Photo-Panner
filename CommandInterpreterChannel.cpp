@@ -36,21 +36,21 @@ boolean CommandInterpreterChannel::beginCommand(const Command *p, unsigned long 
       m_motor.setAcceleration((float)p->m_uValue);
       break;
     case cmdShootOn: {
-      g_cam.ShootOn();
+      m_cam.ShootOn();
       bBlocking = true;
       break;
     }
     case cmdShootOff: {
-      g_cam.ShootOff();
+      m_cam.ShootOff();
       break;
     }
     case cmdFocusOn: {
-      g_cam.FocusOn();
+      m_cam.FocusOn();
       bBlocking = true;
       break;
     }
     case cmdFocusOff: {
-      g_cam.FocusOff();
+      m_cam.FocusOff();
       break;
     }
     //default:

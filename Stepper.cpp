@@ -6,8 +6,8 @@ Stepper::Stepper(uint8_t pinStep, uint8_t pinDirection, uint8_t pinEnable) :
 {
   _enableInverted = true;
   setEnablePin(pinEnable);
-  setMaxSpeed(50); // uPannerMaxSpeed);
-  setAcceleration(20); // uPannerAcceleration);
+  setMaxSpeed(600); // uPannerMaxSpeed);
+  setAcceleration(100); // uPannerAcceleration);
 }
 
 
@@ -20,12 +20,13 @@ void Stepper::enable(bool bEnable)
 
 void Stepper::moveToWayPoint(const char wp[]) 
 {
-  DEBUG_PRINT("Stepper::moveToWayPoint(");  DEBUG_PRINT(wp);  DEBUG_PRINTLN(")");
+ 
   if(wp == 0)
     return;
   if(m_wayPoints.count(wp) == 0)
     return;
   long lPos = m_wayPoints[wp];
+  DEBUG_PRINT("Stepper::moveToWayPoint(");  DEBUG_PRINT(wp);  DEBUG_PRINT(") "); DEBUG_PRINTDEC((int)lPos); DEBUG_PRINTLN(" ");
   moveTo(lPos);
 }
 
