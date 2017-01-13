@@ -36,18 +36,6 @@ extern "C" {
    Globals: reading battery voltage on A0 (through divider offcourse)
 */
 BatteryMonitor g_batteryMonitor(A0);
-/**
-   Globals: simple analog keypad is connected to pin A1
-*/
-Keypad /*Duo*/ g_keyPad(A1 /*, A2*/);
-
-
-
-/**
-   Globals: analog ThumbStick pinX, pinY, pinButton
-*/
-//ThumbStick g_thumbStick(A9, A8, A7);
-
 
 const uint8_t pinPanStep = 3;
 const uint8_t pinPanEnable = 4;
@@ -58,15 +46,15 @@ int varx,vary; // wii joystick position
 
 class g_wiiJoy: public SELECTOR {
  /** define some values for button (key) scan codes */
-  const uint8_t VK_NONE = 0;
-  const uint8_t VK_RIGHT = 1;
-  const uint8_t VK_UP = 2;
-  const uint8_t VK_DOWN = 3;
-  const uint8_t VK_LEFT = 4;
-  const uint8_t VK_SEL = 5;
-  /** Custom context specific soft buttons */
-  const uint8_t VK_SOFTA = 6;
-  const uint8_t VK_SOFTB = 7;
+const uint8_t VK_NONE  = 0;
+const uint8_t VK_RIGHT = 1;
+const uint8_t VK_LEFT  = 2;
+const uint8_t VK_UP    = 4;
+const uint8_t VK_DOWN  = 8;
+const uint8_t VK_SEL   = 16;
+/** Custom context specific soft buttons */
+const uint8_t VK_SOFTA = 32;
+const uint8_t VK_SOFTB = 64;
 
   /* vIEW METHODS
   virtual bool onKeyDown(uint8_t vk);

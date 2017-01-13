@@ -28,7 +28,7 @@ const uint8_t pinCamera = 2;
 //#define NODEBUG 1
 #include "Trace.h"
 //#include "ThumbStick.h"
-#include "Keypad.h"
+#include "KeypadDuo.h"  
 #include "Stepper.h"
 #include "Camera.h"
 #include "CommandInterpreter.h"
