@@ -491,6 +491,9 @@ ControlView::ControlView() :
 boolean ControlView::loop(unsigned long now)
 {
   g_pPanner->runSpeed();
+  //DEBUG_PRINT("Speed: ");
+  //DEBUG_PRINTDEC((int)g_pPanner->speed());	
+  //DEBUG_PRINTLN("Steps per Sec");
   return (g_pPanner->speed() != 0.0);
 }
 

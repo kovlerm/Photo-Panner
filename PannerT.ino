@@ -38,7 +38,7 @@ extern "C" {
 BatteryMonitor g_batteryMonitor(A0);
 
 const uint8_t pinPanStep = 3;
-const uint8_t pinPanEnable = 4;
+  const uint8_t pinPanEnable = 0;
 const uint8_t pinPanDirection = 6;
 
 int varx,vary; // wii joystick position
@@ -77,7 +77,10 @@ const uint8_t VK_SOFTB = 64;
   // void onDown() {Serial.println();Serial.println("Down"); Serial.println(); };             // Down pressed
    
   // momentary    
-  void onMLeft(int v) {Serial.println();Serial.print("MLeft Start  "); Serial.println(v);View::g_pActiveView->onJoy(VK_LEFT,v); };      // Left pressed
+  void onMLeft(int v) {
+    //Serial.println();Serial.print("MLeft Start  "); Serial.println(v);
+    View::g_pActiveView->onJoy(VK_LEFT,v); 
+  };      // Left pressed
   void onMRight(int v) {Serial.println();Serial.print("MRight Start  "); Serial.println(v);View::g_pActiveView->onJoy(VK_RIGHT,v); };         // Right pressed
   void onMUp(int v) {Serial.println();Serial.print("MUp Start  "); Serial.println(v);View::g_pActiveView->onJoy(VK_UP,v); };            // Up pressed
   void onMDown(int v) {Serial.println();Serial.print("MDown Start  "); Serial.println(v);View::g_pActiveView->onJoy(VK_DOWN,v); };          // Down pressed
@@ -93,7 +96,10 @@ const uint8_t VK_SOFTB = 64;
   void onMUpStop() {Serial.println();Serial.println("MUp Stop"); Serial.println();  View::g_pActiveView->onKeyUp(VK_UP);};                 // Up pressed
   void onMDownStop() {Serial.println();Serial.println("MDown Stop"); Serial.println(); View::g_pActiveView->onKeyUp(VK_DOWN);};                 // Down pressed
    
-  void onRepLeft() {Serial.println();Serial.println("Left Repeat"); Serial.println(); View::g_pActiveView->onKeyAutoRepeat(VK_LEFT);};     // Left Repeat pressed
+  void onRepLeft() {
+    //Serial.println();Serial.println("Left Repeat"); Serial.println(); 
+    View::g_pActiveView->onKeyAutoRepeat(VK_LEFT);
+  };     // Left Repeat pressed
   void onRepRight()  {Serial.println();Serial.println("Right Repeat"); Serial.println(); View::g_pActiveView->onKeyAutoRepeat(VK_RIGHT);};   // Right Repeat pressed
   void onRepUp() {Serial.println();Serial.println("Up Repeat"); Serial.println(); View::g_pActiveView->onKeyAutoRepeat(VK_UP);};       // Up Repeat pressed
   void onRepDown() {Serial.println();Serial.println("Down Repeat"); Serial.println(); View::g_pActiveView->onKeyAutoRepeat(VK_DOWN);};     // Down Repeat pressed
@@ -128,7 +134,9 @@ const uint8_t VK_SOFTB = 64;
 
  g_wiiJoy W;
 
-
+ int i_loop=0;
+ long l_loop=0;
+ unsigned long s_now=0;
 
 /**
    Globals: Main command interpreter
@@ -207,43 +215,51 @@ void setup()
 
 void loop()
 {
+  i_loop++;
+  
+  if (i_loop==102) i_loop=0;
   unsigned long now = millis();
+  if (s_now+1000<now ) {
+    s_now=now;
+    
+    DEBUG_PRINT("Loops:");
+    DEBUG_PRINTDEC(l_loop);
+    DEBUG_PRINTLN(";");
+    l_loop=0;
+  }     
+  l_loop++;
 
  // Get wii nunchuck data
  
  delay(1);
  
-  if (nunchuk_get_data()) {
+  if (i_loop==100) {
+  
+  if (nunchuk_get_data() ) {
     // 100 is the distance from 0 on the joystick but safe to take 90 as max value
     varx = nunchuk_cjoy_x(); // nunchuk.analogX is the value of the x-axis
-    vary = nunchuk_cjoy_y(); // nunchuk.analogY is the value of the y-axis
-//    Serial.print("JoyX:");Serial.print(varx);Serial.print("\t| ");
-//    Serial.print("JoyY:");Serial.print(vary);Serial.print("\t| ");
-
-    
-    // if (nunchuk_cbutton())
-      // Serial.print("C");
-    // else
-      // Serial.print("-");
-    // if (nunchuk_zbutton())
-      // Serial.print("Z");
-    // else
-      // Serial.print("-");
-    // Serial.println();
-   
+    vary = nunchuk_cjoy_y(); // nunchuk.analogY is the value of the y-axi
   }
   else {
     Serial.println("Cannot communicate to wiichuck"); 
   };
-
-  W.loop(now, nunchuk_cbutton(),nunchuk_zbutton(),varx,vary);  
+  
+    //DEBUG_PRINT("dELAY:");
+    //DEBUG_PRINTDEC(millis()-now);
+    //DEBUG_PRINTLN(";");
+  };
+  
+  bool bUpdateDisplay = false;
+  if (i_loop==100 || i_loop==60 || i_loop==30) {
+    W.loop(now, nunchuk_cbutton(),nunchuk_zbutton(),varx,vary);  
+  };  
   
 
-  bool bUpdateDisplay = false;
+  
   if (View::g_pActiveView != 0)
-    bUpdateDisplay = View::g_pActiveView->loop(now);
+    if (i_loop==100 || i_loop==60 || i_loop==30) bUpdateDisplay = View::g_pActiveView->loop(now);
 
-  if (g_keyPad.getAndDispatchKey(now))
+  if ((i_loop==100 || i_loop==60 || i_loop==30) && g_keyPad.getAndDispatchKey(now))
   {
     bUpdateDisplay = true;
   }
@@ -259,7 +275,7 @@ void loop()
   }
   //if(bUpdateDisplay) g_ci.updateDisplay(now);
   if (bUpdateDisplay && View::g_pActiveView != 0)
-    View::g_pActiveView->update(now);
+    if (i_loop==100 ) View::g_pActiveView->update(now);
 }
 
 

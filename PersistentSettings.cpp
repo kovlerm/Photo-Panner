@@ -23,10 +23,10 @@ void PersistentSettings::factoryReset()
   m_FocusCorrection=0;
   m_uCameraMount=0;   
   m_uExp = 1;
-  m_uPannerSlowSpeed = 6000;
-  m_uPannerFastSpeed = 3*6000;
-  m_uPannerMaxSpeed = m_uPannerFastSpeed+1000;
-  m_uPannerAcceleration = 50;
+  m_uPannerSlowSpeed = 300;
+  m_uPannerFastSpeed = 700;
+  m_uPannerMaxSpeed = m_uPannerFastSpeed+10;
+  m_uPannerAcceleration = 150;
   m_uDisplayBacklight = 9;
 }
 
