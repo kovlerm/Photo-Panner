@@ -232,50 +232,53 @@ void loop()
  // Get wii nunchuck data
  
  delay(1);
- 
+ bool bUpdateChuck = false;
+ bool bUpdateDisplay = false;
   if (i_loop==100) {
-  
-  if (nunchuk_get_data() ) {
-    // 100 is the distance from 0 on the joystick but safe to take 90 as max value
-    varx = nunchuk_cjoy_x(); // nunchuk.analogX is the value of the x-axis
-    vary = nunchuk_cjoy_y(); // nunchuk.analogY is the value of the y-axi
-  }
-  else {
-    Serial.println("Cannot communicate to wiichuck"); 
-  };
-  
+    if (nunchuk_get_data() ) {
+        // 100 is the distance from 0 on the joystick but safe to take 90 as max value
+        varx = nunchuk_cjoy_x(); // nunchuk.analogX is the value of the x-axis
+        vary = nunchuk_cjoy_y(); // nunchuk.analogY is the value of the y-axi
+        bUpdateChuck = true;
+    }
+    else {
+        Serial.println("Cannot communicate to wiichuck"); 
+    };
+      
     //DEBUG_PRINT("dELAY:");
     //DEBUG_PRINTDEC(millis()-now);
     //DEBUG_PRINTLN(";");
   };
   
-  bool bUpdateDisplay = false;
-  if (i_loop==100 || i_loop==60 || i_loop==30) {
-    W.loop(now, nunchuk_cbutton(),nunchuk_zbutton(),varx,vary);  
+  
+  if (bUpdateChuck) {
+    bUpdateDisplay=W.loop(now, nunchuk_cbutton(),nunchuk_zbutton(),varx,vary);  
   };  
   
 
-  
+  // update display if speed is not 0
   if (View::g_pActiveView != 0)
-    if (i_loop==100 || i_loop==60 || i_loop==30) bUpdateDisplay = View::g_pActiveView->loop(now);
+    //bUpdateDisplay = View::g_pActiveView->loop(now);
+    // loop of view 
+    if (View::g_pActiveView->loop(now) && i_loop==100) bUpdateDisplay = true;
 
-  if ((i_loop==100 || i_loop==60 || i_loop==30) && g_keyPad.getAndDispatchKey(now))
+     
+  if ( g_keyPad.getAndDispatchKey(now)) // update display if keypad event
   {
+    DEBUG_PRINTLN("KEYPAD EVENT");
     bUpdateDisplay = true;
   }
-  /*else if(g_serialCommandInterpreter.available())
-    {
-    DEBUG_PRINTLN("Read a command from serial line!");
-    g_serialCommandInterpreter.readAndDispatch();
-    bUpdateDisplay = true;
-    } */
-  else if (g_batteryMonitor.updateMaybe(now))
+  else if (g_batteryMonitor.updateMaybe(now))  // update display if battery event
   {
     bUpdateDisplay = true;
+    DEBUG_PRINTLN("BATERY EVENT");
   }
   //if(bUpdateDisplay) g_ci.updateDisplay(now);
-  if (bUpdateDisplay && View::g_pActiveView != 0)
-    if (i_loop==100 ) View::g_pActiveView->update(now);
+  if (bUpdateDisplay && View::g_pActiveView != 0) {
+    DEBUG_PRINTLN("UPDATE DISPLAY");
+    //if (bUpdateChuck ) 
+    View::g_pActiveView->update(now);
+  };  
 }
 
 

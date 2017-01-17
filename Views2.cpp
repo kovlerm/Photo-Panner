@@ -490,7 +490,8 @@ ControlView::ControlView() :
  */
 boolean ControlView::loop(unsigned long now)
 {
-  g_pPanner->runSpeed();
+  if (g_pPanner->speed() != 0.0) g_pPanner->runSpeed(); 
+  
   //DEBUG_PRINT("Speed: ");
   //DEBUG_PRINTDEC((int)g_pPanner->speed());	
   //DEBUG_PRINTLN("Steps per Sec");
@@ -504,11 +505,13 @@ bool ControlView::onKeyDown(uint8_t vk)
     case VK_LEFT:
       // start pan left
       DEBUG_PRINTLN("ControlView::onKeyDown(VK_LEFT): start pan left");
+      if (!g_pPanner->isEnabled()) g_pPanner->enable(true);
       g_pPanner->setSpeed((float)g_settings.m_uPannerSlowSpeed);
       break;
     case VK_RIGHT:
       // start pan right
       g_pPanner->setSpeed((float) - g_settings.m_uPannerSlowSpeed);
+      if (!g_pPanner->isEnabled()) g_pPanner->enable(true);
       DEBUG_PRINTLN("ControlView::onKeyDown(VK_RIGHT): start pan right");
       break;
     default:
@@ -517,21 +520,29 @@ bool ControlView::onKeyDown(uint8_t vk)
   return true;
 }
 
-/** analog keyboard APIs where vk is one of VK_xxx */
+/** analog keyboard APIs where vk is one of VK_xxx                                  *
+**  Speed calculation:                                                              *   
+**   speed=slow_speed+(fast_speed-slow_speed)*joy_value/(max_joy-min_joy)           * 
+**   min_joy=20                                                                     *
+**   max_joy=100                                                                    *
+**   fast and slow speed from settings                                              */
+ 
 bool ControlView::onJoy(uint8_t vk, int v)
 {
     switch(vk) {
     case VK_LEFT:
       // start pan left
       //DEBUG_PRINTLN("ControlView::onKeyDown(VK_LEFT): start pan left");
-      g_pPanner->setSpeed((float)v*(float)g_settings.m_uPannerFastSpeed/100.0);
+      if (!g_pPanner->isEnabled()) g_pPanner->enable(true);
+      g_pPanner->setSpeed((float)g_settings.m_uPannerSlowSpeed+((float)v-20.0)*(float)((float)g_settings.m_uPannerFastSpeed-(float)g_settings.m_uPannerSlowSpeed)/80.0);
       //DEBUG_PRINT("Speed: ");
       //DEBUG_PRINTDEC((int)g_pPanner->speed());	
       //DEBUG_PRINTLN("Steps per Sec");
       break;
     case VK_RIGHT:
       // start pan right
-      g_pPanner->setSpeed((float)v*(float)-g_settings.m_uPannerFastSpeed/100.0);
+      if (!g_pPanner->isEnabled()) g_pPanner->enable(true);
+      g_pPanner->setSpeed((float)-g_settings.m_uPannerSlowSpeed-((float)v-20.0)*(float)((float)g_settings.m_uPannerFastSpeed-(float)g_settings.m_uPannerSlowSpeed)/80.0);
       //DEBUG_PRINTLN("ControlView::onKeyDown(VK_RIGHT): start pan right");
       //DEBUG_PRINT("Speed: ");
       //DEBUG_PRINTDEC((int)g_pPanner->speed());	
@@ -570,6 +581,7 @@ bool ControlView::onKeyUp(uint8_t vk)
     case VK_RIGHT:
       // stop pan
       DEBUG_PRINTLN("ControlView::onKeyUp(VK_LEFT or VK_RIGHT): stop pan");
+      if (g_pPanner->isEnabled()) g_pPanner->enable(false);
       g_pPanner->setSpeed(0);
       break;
     case VK_SOFTA:
@@ -622,7 +634,7 @@ void ControlView::onActivate(View *pPrevActive)
   {
     m_strMessage = ""; // "Add wpoint by middle click";
   }
-  g_pPanner->enable(true);
+  g_pPanner->enable(false);
 }
 
 /**
