@@ -502,13 +502,13 @@ boolean ControlView::loop(unsigned long now)
 bool ControlView::onKeyDown(uint8_t vk)
 {
   switch(vk) {
-    case VK_LEFT:
+    case VK_RIGHT:
       // start pan left
       DEBUG_PRINTLN("ControlView::onKeyDown(VK_LEFT): start pan left");
       if (!g_pPanner->isEnabled()) g_pPanner->enable(true);
       g_pPanner->setSpeed((float)g_settings.m_uPannerSlowSpeed);
       break;
-    case VK_RIGHT:
+    case VK_LEFT:
       // start pan right
       g_pPanner->setSpeed((float) - g_settings.m_uPannerSlowSpeed);
       if (!g_pPanner->isEnabled()) g_pPanner->enable(true);
@@ -530,7 +530,7 @@ bool ControlView::onKeyDown(uint8_t vk)
 bool ControlView::onJoy(uint8_t vk, int v)
 {
     switch(vk) {
-    case VK_LEFT:
+    case VK_RIGHT:
       // start pan left
       //DEBUG_PRINTLN("ControlView::onKeyDown(VK_LEFT): start pan left");
       if (!g_pPanner->isEnabled()) g_pPanner->enable(true);
@@ -539,7 +539,7 @@ bool ControlView::onJoy(uint8_t vk, int v)
       //DEBUG_PRINTDEC((int)g_pPanner->speed());	
       //DEBUG_PRINTLN("Steps per Sec");
       break;
-    case VK_RIGHT:
+    case VK_LEFT:
       // start pan right
       if (!g_pPanner->isEnabled()) g_pPanner->enable(true);
       g_pPanner->setSpeed((float)-g_settings.m_uPannerSlowSpeed-((float)v-20.0)*(float)((float)g_settings.m_uPannerFastSpeed-(float)g_settings.m_uPannerSlowSpeed)/80.0);
@@ -558,12 +558,12 @@ bool ControlView::onJoy(uint8_t vk, int v)
 bool ControlView::onLongKeyDown(uint8_t vk)
 {
   switch(vk) {
-    case VK_LEFT:
+    case VK_RIGHT:
       // start fast pan left
       DEBUG_PRINTLN("ControlView::onLongKeyDown(VK_LEFT): start fast pan left");
       g_pPanner->setSpeed((float)g_settings.m_uPannerFastSpeed);
       break;
-    case VK_RIGHT:
+    case VK_LEFT:
       // start fast pan right
       DEBUG_PRINTLN("ControlView::onLongKeyDown(VK_RIGHT): start fast pan right");
       g_pPanner->setSpeed((float) - g_settings.m_uPannerFastSpeed);
@@ -899,7 +899,7 @@ bool PanoramaView::onKeyUp(uint8_t vk)
       DEBUG_PRINTDEC(fAngCam);
       DEBUG_PRINTLN(" ");
       // Panorama angle
-      fAngPan=0.36*abs(g_pPanner->m_wayPoints["A"]-g_pPanner->m_wayPoints["B"]);
+      fAngPan=0.36*abs(g_pPanner->m_wayPoints["A"]-g_pPanner->m_wayPoints["B"])/16.0;
       DEBUG_PRINTLN("Panorama Angle");
       DEBUG_PRINTDEC(fAngPan);
       DEBUG_PRINTLN(" ");
@@ -1036,7 +1036,7 @@ void PanoramaView::updateClient(unsigned long now)
   DEBUG_PRINT("   Y:");
   DEBUG_PRINTDEC(y);
   DEBUG_PRINTLN(" ");
-  printKeyVal(x, y, "Pan", g_pPanner->currentPosition());
+  printKeyVal(x, y, "Pn", g_pPanner->currentPosition());
   y += m_lcd.fontLineSpace() + 2;
   printKeyVal(x, y, "Spd", (long)g_pPanner->speed());
   
@@ -1510,8 +1510,8 @@ void RunPView::updateClient(unsigned long now)
   DEBUG_PRINTLN("RunView::updateClient()");
   updateClientRunOrPaused(now, true);
   // if battery is low - pause the execution which will turn off motors
-  //if(g_batteryMonitor.getGauge() < 5)
-  //  activate(&g_pausedRunView);
+  if(g_batteryMonitor.getGauge() < 5)
+    activate(&g_pausedRunView);
 }
 
 void RunPView::onActivate(View *pPrevActive)

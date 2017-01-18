@@ -274,6 +274,10 @@ public:
   boolean isResting() {
     return (m_ulRestExpiration > 0);
   }
+  /** Are we shooting? */
+  boolean isShooting() {
+    return (m_channels[chPan]->isShooting());
+  }
   /** Are we waiting for completion? */
   boolean isWaitingForCompletion() {
     return (m_ulCompletionExpiration > 0);

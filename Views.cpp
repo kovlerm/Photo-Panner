@@ -296,7 +296,8 @@ void View::updateClientRunOrPaused(unsigned long now, bool bExtendedInfo, const 
     const char *pLabel = 0;
     unsigned wSecs = g_ci.getBusySeconds(now);
     if(g_ci.isResting()) {
-      pLabel = "Rest";
+      if(g_ci.isShooting()) pLabel = "Shoot";
+      else pLabel = "Rest";
       wSecs = g_ci.getRestSeconds(now);
     } else if(g_ci.isWaitingForCompletion()) {
       pLabel = "Wait";
