@@ -31,7 +31,8 @@ struct Command
     /** e.g. name of the waypoint */
     char m_szParam[4];
   };
-
+  //comment to display
+  char m_cmnt[16];
 #ifdef DEBUG
   void DUMP(const char *szText = 0) const ;
 #else
@@ -224,6 +225,9 @@ public:
 
   /** stop processing commands */
   void stopRun();
+  
+  /** proceed execution until end of the loop then stop */
+  void lastRun();
 
   /** suspend the run, can resume */
   void pauseRun();
@@ -282,6 +286,7 @@ public:
   boolean isWaitingForCompletion() {
     return (m_ulCompletionExpiration > 0);
   }
+  
 
   Stepper *getPanner() {
     return m_channels[chPan]->getMotor();
@@ -315,6 +320,10 @@ private:
   unsigned long m_ulPaused = 0;
   /** we are waiting for (channel) command(s) to be completed. */
   unsigned long m_ulCompletionExpiration = 0;
+  
+  /** Exit loop at the EndLoop. */
+  bool m_bLast = 0;
+  
 };
 
 extern CommandInterpreter g_ci;

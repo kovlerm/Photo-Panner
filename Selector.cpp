@@ -6,14 +6,14 @@ bool SELECTOR::loop(unsigned long int ulNow, unsigned int bC, unsigned int bZ, i
     bool b_event=false;
     if (!bZ && !bC) {
         // Momentary reading 
-        if (JoyY>20) {
+        if (JoyY>10) {
           onMUp(JoyY); b_event=true;
           if(!lastUp) onMUpStart();
           mUp=1; 
           if (mDown) onMDownStop(); 
           mDown=0;
         }
-        else if (JoyY<-20) {
+        else if (JoyY<-10) {
           onMDown(-JoyY); b_event=true;
           if(!lastDown) onMDownStart();
           if (mUp) onMUpStop(); 
@@ -27,14 +27,14 @@ bool SELECTOR::loop(unsigned long int ulNow, unsigned int bC, unsigned int bZ, i
           mDown=0;
         };
         
-        if (JoyX>20) {
+        if (JoyX>10) {
           onMRight(JoyX); b_event=true;
           if(!lastRight) onMRightStart();
           mRight=1; 
           if (mLeft) onMLeftStop();
           mLeft=0;
         }
-        else if (JoyX<-20) {
+        else if (JoyX<-10) {
           onMLeft(-JoyX); b_event=true;
           if(!lastLeft) onMLeftStart();
           if (mRight) onMRightStop();
@@ -63,8 +63,20 @@ bool SELECTOR::loop(unsigned long int ulNow, unsigned int bC, unsigned int bZ, i
     else {bUp=0; bDown=0;};
     
     
-    // Events   
-    if (bC && !lastC) { //press down
+    // Events  
+    if (bC && bZ && (!lastC || !lastZ)) { //press down
+      onCZ();
+      onCZ_Down();
+      b_event=true;
+      //set timers
+      tRCZ=ulNow+s_iAutoRepeatDelay; // first time repeat timer
+      tLCZ=ulNow+s_iLongKeyDelay;    // first time long key timer
+      fLCZ=0;
+    }
+    else if ((!bC || !bZ)  && lastC && lastZ) {onCZ_Up();b_event=true;} //unpressed
+
+    
+    else if (bC && !lastC) { //press down
       onC();
       onC_Down();
       b_event=true;
@@ -73,9 +85,9 @@ bool SELECTOR::loop(unsigned long int ulNow, unsigned int bC, unsigned int bZ, i
       tLC=ulNow+s_iLongKeyDelay;    // first time long key timer
       fLC=0;
     }
-    else if (!bC && lastC) {onC_Up();b_event=true;}; //unpressed
+    else if (!bC && lastC) {onC_Up();b_event=true;} //unpressed
      
-    if (bZ && !lastZ) { //press down
+    else if (bZ && !lastZ) { //press down
       onZ();
       onZ_Down();
       b_event=true;
@@ -85,6 +97,8 @@ bool SELECTOR::loop(unsigned long int ulNow, unsigned int bC, unsigned int bZ, i
       fLZ=0;
     }
     else if (!bZ && lastZ) {onZ_Up(); b_event=true;}; //unpressed
+    
+    
     
     if (bRight && !lastRight) {
       if (bC) onCRight();
@@ -123,10 +137,11 @@ bool SELECTOR::loop(unsigned long int ulNow, unsigned int bC, unsigned int bZ, i
     
 //++++++++++++++++++++++++>>>>
     // Long Events Call 
-    bLC=bLZ=bLLeft=bLRight=bLUp=bLDown=0;
-    bRC=bRZ=bRLeft=bRRight=bRUp=bRDown=0;
-    if (!bLC && bC && tLC-ulNow<0) { // long key timer event
+    bLC=bLZ=bLCZ=bLLeft=bLRight=bLUp=bLDown=0;
+    bRC=bRZ=bRCZ=bRLeft=bRRight=bRUp=bRDown=0;
+    if (!fLC && bC && tLC-ulNow<0) { // long key timer event
       bLC=1;
+      fLC=1;
     };
     if (bC && tRC<ulNow) {         // repeat timer event
       bRC=1;
@@ -140,6 +155,15 @@ bool SELECTOR::loop(unsigned long int ulNow, unsigned int bC, unsigned int bZ, i
     if (bZ && tRZ<ulNow) {         // repeat timer event
       bRZ=1;
       tRZ=ulNow+s_iDebounceDelay;    // first time repeat timer
+    };
+ 
+    if (!fLCZ && bC && bZ && tLCZ-ulNow<0) { // long key timer event
+      bLCZ=1;
+      fLCZ=1;
+    };
+    if (bC && bZ && tRCZ<ulNow) {         // repeat timer event
+      bRCZ=1;
+      tRCZ=ulNow+s_iDebounceDelay;    // first time repeat timer
     };
 
     if (!fLLeft && bLeft && tLLeft<ulNow) { // long key timer event

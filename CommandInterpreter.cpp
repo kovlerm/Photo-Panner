@@ -12,7 +12,8 @@ void Command::DUMP(const char *szText) const
   DEBUG_PRINT(" Command@"); DEBUG_PRINTDEC((int)this); 
   DEBUG_PRINT(" m_channel="); DEBUG_PRINTDEC(m_channel); 
   DEBUG_PRINT(" m_command="); DEBUG_PRINTDEC(m_command); 
-  DEBUG_PRINT(" m_lPosition="); DEBUG_PRINTDEC(m_lPosition); 
+  DEBUG_PRINT(" m_lPosition="); DEBUG_PRINTDEC(m_lPosition);
+  DEBUG_PRINT(" m_cmnt="); DEBUG_PRINT(m_cmnt);
   DEBUG_PRINTLN("");
 }
 #endif
@@ -25,6 +26,9 @@ CommandInterpreter::CommandInterpreter(uint8_t pinStep, uint8_t pinDirection, ui
 {
   m_channels[chControl] = 0;
   m_channels[chPan] = new /*Pan*/ CommandInterpreterChannel(pinStep, pinDirection, pinEnable);
+  
+  
+   
 }
 
 
@@ -75,6 +79,13 @@ void CommandInterpreter::pauseRun()
     if((m_channels[i] != 0) && m_channels[i]->isBusy())
       m_channels[i]->pauseCommand();
   //updateDisplay(m_ulPaused);
+}
+
+/** execute loop then stop */
+void CommandInterpreter::lastRun() 
+{
+  DEBUG_PRINTLN("CommandInterpreter::lastRun");
+  m_bLast=1;
 }
 
 /** resume the run */
@@ -191,6 +202,11 @@ void CommandInterpreter::beginCommand(const Command *p, unsigned long now)
   for(bool bContinue = true; bContinue;) 
   {
     m_pCommand = p;
+    //m_lcd.setTextColor (ILI9341_RED);
+    //m_lcd.setCursor(5, 150);
+    //m_lcd.print( "               ");
+    //m_lcd.setCursor(5, 150);
+    //m_lcd.print( m_pCommand->m_cmnt);
     m_pCommand->DUMP("m_pCommand=");
     schar_t ch = p->m_channel;
     switch(ch)
@@ -215,8 +231,22 @@ void CommandInterpreter::beginCommand(const Command *p, unsigned long now)
             break;
           case cmdControlEndLoop:
             //p = endLoop();
-            p = m_pBeginLoopCommand;
-            m_pBeginLoopCommand = 0;            
+            if (!m_bLast) {
+                p = m_pBeginLoopCommand;
+                m_pBeginLoopCommand = 0;
+            }
+            else {
+                stopRun();
+                p=0;
+                DEBUG_PRINTLN("ENDED"); 
+                m_lcd.setTextColor (ILI9341_BLACK);
+                m_lcd.setCursor(100, 180);
+                m_lcd.print("Completing...");
+                m_lcd.setTextColor (ILI9341_GREEN);
+                m_lcd.setCursor(100, 180);
+                m_lcd.print("Completed...");
+                
+            };    
             break;
           //case cmdNone:
           default:
@@ -238,7 +268,9 @@ void CommandInterpreter::beginCommand(const Command *p, unsigned long now)
           bContinue = m_channels[ch]->beginCommand(p, now);
           if(bContinue)
             p++;
-        }
+        };
+       
+        
         break;
         
       default:

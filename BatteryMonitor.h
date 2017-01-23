@@ -12,9 +12,9 @@ class BatteryMonitor
 {
 public: 
   /** customize this depending on your battery and divider */
-  static const uint16_t uReadingBatteryEmpty = 236; // 2.9V per cell - 11.6V total
+  static const uint16_t uReadingBatteryEmpty = 380; // 2.9V per cell - 11.6V total
   /** customize this depending on your battery and divider */
-  static const uint16_t uReadingBatteryFull = 330;  // 4.2V per cell - 16.8V total
+  static const uint16_t uReadingBatteryFull = 579;  // 4.2V per cell - 16.8V total
   
   /**  update period 10sec */
   static const unsigned long ulUpdatePeriod = 1*1000;

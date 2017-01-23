@@ -30,14 +30,14 @@ AboutView g_aboutView;
  */
 static Command cmds[] = 
 {
-  {chPan,     cmdSetMaxSpeed, 20},
+  {chPan,     cmdSetMaxSpeed, 20,"  "},
   {chPan,     cmdSetAcceleration, 10},
   {chControl, cmdControlBeginLoop, 0},
     {chPan,     cmdGoToWaypoint, 1},                 // go right
     {chControl, cmdControlWaitForCompletion,  500000},  // wait for the movement to be completed for 50 sec
     {chControl, cmdControlRest,  20000},  // rest for 10 sec
     {chPan,     cmdGoToWaypoint, 2},                // go left
-    {chControl, cmdControlWaitForCompletion,  500000},  // wait for the movement to be completed for 50 sec
+    {chControl, cmdControlWaitForCompletion,  500000,"comp"},  // wait for the movement to be completed for 50 sec
     {chControl, cmdControlRest,  20000},  // rest for 10 sec
   {chControl, cmdControlEndLoop, 0},
   {chControl, cmdControlNone,    0}
@@ -48,6 +48,7 @@ static Command cmds[] =
  * Globals: commands to run at startup
  */
 static Command pan_cmds[200];
+ 
 
 static const char szRest[] = "Rest";
 static const char szWaitForCompletion[] = "Wait";
@@ -315,7 +316,10 @@ bool MySettingsView::onKeyUp(uint8_t vk)
       g_pCam->uMount=g_settings.m_uCameraMount = m_settings.getValue(szPos)->getCurSel();      
       g_settings.m_uExp = m_settings.getNumericValue(szExposure); 
       g_pCam->ulExp=g_settings.m_uExp*1000;
+      g_settings.m_uPannerSlowSpeed = m_settings.getNumericValue(szPanSlowSpeed);
       g_settings.m_uPannerFastSpeed = 3 * g_settings.m_uPannerSlowSpeed;
+      //g_settings.m_uPannerFastSpeed = 3 * g_settings.m_uPannerSlowSpeed;
+      g_settings.m_uPannerFastSpeed = g_settings.m_uPannerMaxSpeed-100;
       g_pPanner->setMaxSpeed(g_settings.m_uPannerMaxSpeed = m_settings.getNumericValue(szPanMaxSpeed));
       g_pPanner->setAcceleration(g_settings.m_uPannerAcceleration = m_settings.getNumericValue(szPanAcceleration));
       m_lcd.setBacklight(g_settings.m_uDisplayBacklight = m_settings.getNumericValue(szBacklight));
@@ -504,16 +508,25 @@ bool ControlView::onKeyDown(uint8_t vk)
   switch(vk) {
     case VK_RIGHT:
       // start pan left
+      m_lcd.setBacklight(0);
       DEBUG_PRINTLN("ControlView::onKeyDown(VK_LEFT): start pan left");
       if (!g_pPanner->isEnabled()) g_pPanner->enable(true);
       g_pPanner->setSpeed((float)g_settings.m_uPannerSlowSpeed);
       break;
     case VK_LEFT:
       // start pan right
+      m_lcd.setBacklight(0);
       g_pPanner->setSpeed((float) - g_settings.m_uPannerSlowSpeed);
       if (!g_pPanner->isEnabled()) g_pPanner->enable(true);
       DEBUG_PRINTLN("ControlView::onKeyDown(VK_RIGHT): start pan right");
       break;
+    case VK_SOFTAB: 
+      // start shooting
+      DEBUG_PRINTLN("ControlView::onKeyDown(VK_SOFTAB (CZ)): shooter on");
+      g_pCam->FocusOn();
+      g_pCam->FocusOff();
+      g_pCam->ShootOn();
+      break;  
     default:
       return false;
   }
@@ -528,21 +541,33 @@ bool ControlView::onKeyDown(uint8_t vk)
 **   fast and slow speed from settings                                              */
  
 bool ControlView::onJoy(uint8_t vk, int v)
-{
+{   
+    double b=log((double)g_settings.m_uPannerFastSpeed/(double)g_settings.m_uPannerSlowSpeed)/(128.0-10.0);
+    double a=(double)g_settings.m_uPannerFastSpeed/exp(b*128.0);
+    
+    
     switch(vk) {
     case VK_RIGHT:
       // start pan left
       //DEBUG_PRINTLN("ControlView::onKeyDown(VK_LEFT): start pan left");
+      m_lcd.setBacklight(0);
       if (!g_pPanner->isEnabled()) g_pPanner->enable(true);
-      g_pPanner->setSpeed((float)g_settings.m_uPannerSlowSpeed+((float)v-20.0)*(float)((float)g_settings.m_uPannerFastSpeed-(float)g_settings.m_uPannerSlowSpeed)/80.0);
+      //DEBUG_PRINT(" SPD: ");
+      //  DEBUG_PRINTDEC((float) (sign*a*exp(b*(float)abs(v))));
+      //  DEBUG_PRINTLN("");
+    
+      //g_pPanner->setSpeed((float)g_settings.m_uPannerSlowSpeed+((float)v-10.0)*(float)((float)g_settings.m_uPannerFastSpeed-(float)g_settings.m_uPannerSlowSpeed)/(118.0*log_v));
+      g_pPanner->setSpeed(a*exp(b*(float)abs(v)));
       //DEBUG_PRINT("Speed: ");
       //DEBUG_PRINTDEC((int)g_pPanner->speed());	
       //DEBUG_PRINTLN("Steps per Sec");
       break;
     case VK_LEFT:
       // start pan right
+      m_lcd.setBacklight(0);
       if (!g_pPanner->isEnabled()) g_pPanner->enable(true);
-      g_pPanner->setSpeed((float)-g_settings.m_uPannerSlowSpeed-((float)v-20.0)*(float)((float)g_settings.m_uPannerFastSpeed-(float)g_settings.m_uPannerSlowSpeed)/80.0);
+      g_pPanner->setSpeed(-1.0*a*exp(b*(float)abs(v)));
+      //g_pPanner->setSpeed((float)-g_settings.m_uPannerSlowSpeed-((float)v-10.0)*(float)((float)g_settings.m_uPannerFastSpeed-(float)g_settings.m_uPannerSlowSpeed)/(118.0*log_v));
       //DEBUG_PRINTLN("ControlView::onKeyDown(VK_RIGHT): start pan right");
       //DEBUG_PRINT("Speed: ");
       //DEBUG_PRINTDEC((int)g_pPanner->speed());	
@@ -583,6 +608,12 @@ bool ControlView::onKeyUp(uint8_t vk)
       DEBUG_PRINTLN("ControlView::onKeyUp(VK_LEFT or VK_RIGHT): stop pan");
       if (g_pPanner->isEnabled()) g_pPanner->enable(false);
       g_pPanner->setSpeed(0);
+      m_lcd.setBacklight(g_settings.m_uDisplayBacklight);
+      break;
+    case VK_SOFTAB:  
+      // start shooting
+      g_pCam->ShootOff();
+      DEBUG_PRINTLN("ControlView::onKeyUp(VK_SOFTAB (CZ)): shooter off"); 
       break;
     case VK_SOFTA:
       // switch to Settings view
@@ -869,11 +900,12 @@ bool PanoramaView::onKeyUp(uint8_t vk)
         DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SOFTA): switch to Control view");
         activate(&g_waypointsView);
         break;
-    case VK_SOFTB:
+    
         // switch to Edit view
-        DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SOFTB): switch to Edit view");
-        activate(&g_editView);
-        break;
+        //DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SOFTB): switch to Edit view");
+        //activate(&g_editView);
+        //break;
+    case VK_SOFTB:
     case VK_SEL: {
       g_pCam->uFocus = m_panorama.getNumericValue(szFocus); 
       g_pCam->uMount= m_panorama.getValue(szPos)->getCurSel();      
@@ -916,23 +948,27 @@ bool PanoramaView::onKeyUp(uint8_t vk)
       // Create Program 
       int step=0;
       //test A={.m_szParam={'A'}};   Test for Union needs to be removed
-      pan_cmds[step] = {chPan,     cmdSetMaxSpeed, (unsigned long)g_pPanner->getMaxSpeed()};
-      pan_cmds[step++] = {chPan,     cmdSetAcceleration, 100};
-      pan_cmds[step++] = {chControl, cmdControlBeginLoop, 0};
+      pan_cmds[step] = (Command){chPan,     cmdSetMaxSpeed, (unsigned long)g_pPanner->getMaxSpeed(),""};
+      pan_cmds[step++] = (Command){chPan,     cmdSetAcceleration, 100,""};
+      pan_cmds[step++] = (Command){chControl, cmdControlBeginLoop, 0,""};
       //pan_cmds[step++] = {chPan,     cmdGoToWaypoint, {.m_lPosition='A'}};                        // go to left corner
-      pan_cmds[step] = {chPan,     cmdGoToWaypoint, 1}; pan_cmds[step].m_szParam[0]='A'; step++;    // go to left corner
-      pan_cmds[step++] = {chControl, cmdControlWaitForCompletion,  50000};                         // wait for the movement to be completed for 50 sec
-      pan_cmds[step++] = {chControl, cmdControlRest,  200};                                         // deep breath before shooting
-      pan_cmds[step++] = {chPan, cmdShootOn,  0};                                                   // fire
+      pan_cmds[step] = (Command){chPan,     cmdGoToWaypoint, 1,""}; pan_cmds[step].m_szParam[0]='A'; step++;    // go to left corner
+      pan_cmds[step++] = (Command){chControl, cmdControlWaitForCompletion,  50000,"To Start"};                          // wait for the movement to be completed for 50 sec
+      pan_cmds[step++] = (Command){chControl, cmdControlRest,  1000,""};                                         // deep breath before shooting
+      pan_cmds[step++] = (Command){chPan, cmdFocusOn,  0,""};
+      pan_cmds[step++] = (Command){chControl, cmdControlRest,  500,""};
+      pan_cmds[step++] = (Command){chPan, cmdFocusOff,  0,""};
+    
       // loop for bracketing
       DEBUG_PRINTLN("Bracketing loop");
       for( int b = 0; b < g_pCam->uBrk; b = b + 1 ) {
           DEBUG_PRINTDEC(b+1);
           DEBUG_PRINT(" Exposure "); 
+          pan_cmds[step++] = (Command){chPan, cmdShootOn,  0};                                                   // fire
           if (g_pCam->ulExp == 0) { // exposure managed by camera < 1 sec
-            pan_cmds[step++] = {chControl, cmdControlRest, 200};                                       // very quick exposure
-            pan_cmds[step++] = {chPan, cmdShootOff, 0};
-            pan_cmds[step++] = {chControl, cmdControlRest, 2000};                                      // wait 2 sec
+            pan_cmds[step++] = (Command){chControl, cmdControlRest, 2000,"Shooting"};                                       // very quick exposure
+            pan_cmds[step++] = (Command){chPan, cmdShootOff, 0,""};
+            pan_cmds[step++] = (Command){chControl, cmdControlRest, 500,""};                                      // wait 0.5 sec
           }
           else { 
             unsigned long uCExp;
@@ -942,25 +978,29 @@ bool PanoramaView::onKeyUp(uint8_t vk)
             else uCExp=g_pCam->ulExp*myPowerOfTwo;     
             DEBUG_PRINTDEC(uCExp);
             DEBUG_PRINTLN(" ");             
-            pan_cmds[step++] = {chControl, cmdControlRest, uCExp};                                // exposure
-            pan_cmds[step++] = {chPan, cmdShootOff, 0};                                                   // gun down
+            pan_cmds[step++] = (Command){chControl, cmdControlRest, uCExp,"Shooting"};                                // exposure
+            pan_cmds[step++] = (Command){chPan, cmdShootOff, 0,""};                                           // gun down
+            pan_cmds[step++] = (Command){chControl, cmdControlRest, 500,""};                                  // wait 0.5 sec
           } 
       }      
       for( int a = 0; a < iShots; a = a + 1 ) {
-        //pan_cmds[step++] = {chPan,     cmdGo, {.m_lPosition=(long)iStep}};                        //go to next point of shooting
-        pan_cmds[step] = {chPan,     cmdGo, 0}; pan_cmds[step].m_lPosition=(long) iStep; step++;    //go to next point of shooting
-        pan_cmds[step++] = {chControl, cmdControlWaitForCompletion,  50000};                        // wait for the movement to be completed for 5 sec
-        pan_cmds[step++] = {chControl, cmdControlRest,  200};                                       // deep breath before shooting
-        pan_cmds[step++] = {chPan, cmdShootOn,  0};                                                 // fire
+        pan_cmds[step] = (Command){chPan,     cmdGo, 0,""}; pan_cmds[step].m_lPosition=(long) iStep; step++;    //go to next point of shooting
+        pan_cmds[step++] = (Command){chControl, cmdControlWaitForCompletion,  50000,"To Next"};                        // wait for the movement to be completed for 5 sec
+        pan_cmds[step++] = (Command){chControl, cmdControlRest,  1000,""};                                         // deep breath before shooting
+        pan_cmds[step++] = (Command){chPan, cmdFocusOn,  0,""};
+        pan_cmds[step++] = (Command){chControl, cmdControlRest,  500,""};
+        pan_cmds[step++] = (Command){chPan, cmdFocusOff,  0,""};
+                                      
         // loop for bracketing
         
       
         for( int b = 0; b < g_pCam->uBrk; b = b + 1 ) {
+            pan_cmds[step++] = (Command){chPan, cmdShootOn,  0,""};                                                 // fire
         
             if (g_pCam->ulExp == 0) { // exposure managed by camera < 1 sec
-                pan_cmds[step++] = {chControl, cmdControlRest, 200};                                       // very quick exposure
-                pan_cmds[step++] = {chPan, cmdShootOff, 0};
-                pan_cmds[step++] = {chControl, cmdControlRest, 2000};                                      // wait 2 sec
+                pan_cmds[step++] = (Command){chControl, cmdControlRest, 2000,"Shooting"};                                       // very quick exposure
+                pan_cmds[step++] = (Command){chPan, cmdShootOff, 0,""};
+                pan_cmds[step++] = (Command){chControl, cmdControlRest, 500,""};                                      // wait 2 sec
             }
             else { 
                 unsigned long uCExp;
@@ -969,14 +1009,15 @@ bool PanoramaView::onKeyUp(uint8_t vk)
                 else if (b==u_cp) uCExp=g_pCam->ulExp;  
                 else uCExp=g_pCam->ulExp*myPowerOfTwo; 
                                 
-                pan_cmds[step++] = {chControl, cmdControlRest, uCExp};                                // exposure
-                pan_cmds[step++] = {chPan, cmdShootOff, 0};                                                   // gun down
+                pan_cmds[step++] = (Command){chControl, cmdControlRest, uCExp,"Shooting"};                                // exposure
+                pan_cmds[step++] = (Command){chPan, cmdShootOff, 0,""};                                           // gun down
+                pan_cmds[step++] = (Command){chControl, cmdControlRest, 500,""};                                  // wait 0.5 sec
             } 
         }                                                    // gun down  
       };
-      pan_cmds[step++] = {chControl, cmdControlRest,  1000}; 
-      pan_cmds[step++] = {chControl, cmdControlEndLoop, 0};
-      pan_cmds[step++] = {chControl, cmdControlNone,    0};
+      pan_cmds[step++] = (Command){chControl, cmdControlRest,  1000,""}; 
+      pan_cmds[step++] = (Command){chControl, cmdControlEndLoop, 0,""};
+      pan_cmds[step++] = (Command){chControl, cmdControlNone,    0,""};
       DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SEL)");
       // Run Program 
       activate(&g_runPView);
@@ -1467,12 +1508,16 @@ void RunView::onActivate(View *pPrevActive)
  */
 boolean RunView::loop(unsigned long now)
 {
-  if(!g_ci.isRunning())
-    ;
+  if(!g_ci.isRunning()){
+    g_pCam->ShootOff();
+    m_lcd.setBacklight(g_settings.m_uDisplayBacklight);
+    activate(&g_panoramaView); 
+  }     
   else if(g_ci.continueRun(now))
-    ;
-  else
+  ;
+  else {
     g_ci.endRun();
+  };    
   return needsUpdate(now);
 }
 
@@ -1489,13 +1534,26 @@ bool RunPView::onKeyUp(uint8_t vk)
   switch(vk)
   {
     case VK_SOFTA:
+      g_pCam->ShootOff();
+      m_lcd.setBacklight(g_settings.m_uDisplayBacklight);
       DEBUG_PRINTLN("RunView::onKeyUp(VK_SOFTA): switch to Pause view");
       activate(&g_pausedRunView);
       break;
     case VK_SOFTB:
+      g_pCam->ShootOff();
+      m_lcd.setBacklight(g_settings.m_uDisplayBacklight);
       DEBUG_PRINTLN("RunView::onKeyUp(VK_SOFTB): stop and back to Panorama");
       activate(&g_panoramaView);
       break;
+    case VK_SEL: 
+      f_LastTime=1;
+      g_ci.lastRun(); 
+      //m_lcd.setFont(AwesomeF200_18);
+      //m_lcd.setTextSize(1);
+      m_lcd.setTextColor (ILI9341_RED);
+      // m_lcd.width() - m_lcd.measureTextWidth(szText) - 1
+      m_lcd.setCursor(100, 180);
+      m_lcd.print("Completing...");
     default:
       return false;
   }
@@ -1519,7 +1577,7 @@ void RunPView::onActivate(View *pPrevActive)
   // support the default behaviour
   View::onActivate(pPrevActive);
   DEBUG_PRINTLN("RunView::onActivate()");
-  
+  m_lcd.setBacklight(0);
   g_pPanner->enable(true);
   // (re)start command interpreter
   if(g_ci.isPaused())
@@ -1558,7 +1616,7 @@ bool PausedRunView::onKeyUp(uint8_t vk)
     case VK_SOFTA:
       DEBUG_PRINTLN("PausedRunView::onKeyUp(VK_SOFTA): switch to Run view");
       // resume program execution here!
-      activate(&g_runView);
+      activate(&g_runPView);
       break;
     case VK_SOFTB:
       DEBUG_PRINTLN("PausedRunView::onKeyUp(VK_SOFTB): stop and switch to Run view");

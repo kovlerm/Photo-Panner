@@ -219,6 +219,10 @@ public:
    * to be called from the main loop on the active view.  Do nothing by default. Return TRUE to update display
    */
   boolean loop(unsigned long now);
+
+private:
+  bool f_LastTime=0; // flag of last time
+  int  i_nRun=0;     // number of panorama shoot   
 };
 
 

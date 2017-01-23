@@ -280,9 +280,9 @@ int16_t ListSpinnerWidget::advanceSelection(int16_t iAdv /*= 1*/)
   if(m_selectionMode == smMultiSelection)
   {
     // this is a number spinner!!   
-    if((iAdv > 0) && ((m_maxVal - iAdv) <= m_iCurSel))
+    if((iAdv > 0) && ((m_iCurSel  + iAdv) > m_maxVal))
       return LB_ERR;
-    if((iAdv < 0) && ((m_minVal - iAdv) >= m_iCurSel))
+    if((iAdv < 0) && ((m_iCurSel  + iAdv) < m_minVal))
       return LB_ERR;
     m_iCurSel += iAdv;  // uninhibited advance!
     return 0;

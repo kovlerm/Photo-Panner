@@ -7,10 +7,17 @@ PersistentSettings g_settings;
 /** restore g_settings from EEPROM */
 bool PersistentSettings::restore()
 {
-  EEPROM.get(iEEaddress, this);
-  bool bRes = (m_signature[0] == 'P') && (m_signature[0] == '0');
+  //EEPROM.get(iEEaddress, this);
+  EEPROM.get(iEEaddress, g_settings);
+  bool bRes = (m_signature[0] == 'P') && (m_signature[1] == '0');
+  DEBUG_PRINTLN("Signature");
+      DEBUG_PRINTDEC(m_uSignature);
+      DEBUG_PRINTLN(" ");
   if(!bRes)
     factoryReset();
+  DEBUG_PRINTLN("Signature");
+      DEBUG_PRINTDEC(m_uSignature);
+      DEBUG_PRINTLN(" ");  
   return bRes;
 }
 
@@ -33,6 +40,7 @@ void PersistentSettings::factoryReset()
 bool PersistentSettings::save()
 {
   EEPROM.put(iEEaddress, g_settings);
+  DEBUG_PRINTLN("Saved");
   return true;  
 }
 

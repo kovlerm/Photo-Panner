@@ -24,6 +24,7 @@ const uint8_t VK_SEL   = 16;
 /** Custom context specific soft buttons */
 const uint8_t VK_SOFTA = 32;
 const uint8_t VK_SOFTB = 64;
+const uint8_t VK_SOFTAB = 128;
 
 
 class KeypadChannel

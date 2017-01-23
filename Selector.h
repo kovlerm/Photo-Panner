@@ -25,6 +25,11 @@ public:
   virtual void onUp() {};           // Up pressed
   virtual void onDown() {};         // Down pressed
 
+  virtual void onCZ() {};            // C pressed and unpressed 
+  virtual void onCZ_Up() {};          // C unpressed
+  virtual void onCZ_Down() {};       // C pressed
+  virtual void onRepCZ() {};         // C pressed 
+  virtual void onLongCZ() {};        // C Long pressed
 
   virtual void onMLeft(int) {};         // Left pressed
   virtual void onMRight(int) {};        // Right pressed
@@ -119,6 +124,7 @@ public:
   unsigned long tRDown=0;
   unsigned long tRC=0;
   unsigned long tRZ=0;
+  unsigned long tRCZ=0;
 
 // Long Event timers
   unsigned long tLLeft=0;
@@ -126,7 +132,8 @@ public:
   unsigned long tLUp=0;
   unsigned long tLDown=0;
   unsigned long tLC=0;
-  unsigned long tLZ=0;  
+  unsigned long tLZ=0;
+  unsigned long tLCZ=0;  
 
   // Logical Long events
   unsigned int bLLeft=0;
@@ -135,6 +142,7 @@ public:
   unsigned int bLDown=0;
   unsigned int bLC=0;
   unsigned int bLZ=0;
+  unsigned int bLCZ=0;
   
   // flags
   unsigned int fLLeft=0;
@@ -143,6 +151,7 @@ public:
   unsigned int fLDown=0;
   unsigned int fLC=0;
   unsigned int fLZ=0;
+  unsigned int fLCZ=0;
 
   unsigned int bRLeft=0;
   unsigned int bRRight=0;
@@ -150,6 +159,7 @@ public:
   unsigned int bRDown=0;
   unsigned int bRC=0;
   unsigned int bRZ=0;
+  unsigned int bRCZ=0;
   
   unsigned int lastLeft=0;
   unsigned int lastRight=0;

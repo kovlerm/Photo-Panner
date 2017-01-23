@@ -6,7 +6,8 @@ class Camera
 
 public:
   Camera(); // copy from permanent settings
-  Camera(uint16_t,uint16_t,uint16_t); // Focus (mm), Mount 0-Portrait/1-Landscape,  Exposure in sec
+  void setup(uint16_t,uint16_t,uint16_t); // Focus (mm), Mount 0-Portrait/1-Landscape,  Exposure in sec
+  void setup();                           // Get from global settings
   
   void ShootOn();  // Run shooter for miliseconds pin2
   void ShootOff(); // Run shooter for miliseconds pin2

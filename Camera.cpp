@@ -8,13 +8,10 @@ Camera::Camera()
     pinMode (FocusPin, OUTPUT);
     digitalWrite(CameraPin, LOW);
     digitalWrite(FocusPin, LOW);
-    uFocus=g_settings.m_uFocus+g_settings.m_FocusCorrection;
-    uMount=g_settings.m_uCameraMount;
-    ulExp=g_settings.m_uExp*1000000;
-    uBrk=1;
+    
 }
 
-Camera::Camera(uint16_t fcs,uint16_t mnt,uint16_t exp) // Focus (mm), Mount 0-Portrait/1-Landscape,  Exposure in sec 
+void Camera::setup(uint16_t fcs,uint16_t mnt,uint16_t exp) // Focus (mm), Mount 0-Portrait/1-Landscape,  Exposure in sec 
 {
     CameraPin=pinCamera;
     FocusPin=pinFocus;
@@ -28,28 +25,40 @@ Camera::Camera(uint16_t fcs,uint16_t mnt,uint16_t exp) // Focus (mm), Mount 0-Po
     ulExp=exp*1000;
 }
 
+void Camera::setup()
+{
+    uFocus=g_settings.m_uFocus+g_settings.m_FocusCorrection;
+    uMount=g_settings.m_uCameraMount;
+    ulExp=g_settings.m_uExp*1000;
+    uBrk=1;
+};    
+
 void Camera::ShootOn()
 {
   b_shoot=true;
   digitalWrite(CameraPin, HIGH);
+  DEBUG_PRINTLN("CameraPin - HIGH");
 }
 
 void Camera::ShootOff()
 {
   b_shoot=false;
   digitalWrite(CameraPin, LOW);
+  DEBUG_PRINTLN("CameraPin - LOW");
 }
 
 void Camera::FocusOn()
 {
   b_shoot=true;
   digitalWrite(FocusPin, HIGH);
+  DEBUG_PRINTLN("FocusPin - HIGH");
 }
 
 void Camera::FocusOff()
 {
   b_shoot=false;
   digitalWrite(FocusPin, LOW);
+  DEBUG_PRINTLN("FocusPin - LOW");
 }
 
 bool Camera::isShooting() // mode 

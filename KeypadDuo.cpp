@@ -40,6 +40,7 @@ static const char *getKeyName(uint8_t vk) {
  */
 uint8_t KeypadChannel::getKey2(int16_t iReading)
 {
+  //DEBUG_PRINT("ireading 2=> "); DEBUG_PRINTDEC(iReading);DEBUG_PRINTLN("");
   // 1st option for speed reasons since it will be the most likely result
   if(iReading > 760) { // 512 + 512/2
     //DEBUG_PRINTLN("Keypad::getKey2() => VK_NONE");
@@ -59,6 +60,7 @@ uint8_t KeypadChannel::getKey2(int16_t iReading)
  */
 uint8_t KeypadChannel::getKey3(int16_t iReading)
 {
+  //DEBUG_PRINT("ireading 3=> "); DEBUG_PRINTDEC(iReading);DEBUG_PRINTLN("");
   // 1st option for speed reasons since it will be the most likely result
   if(iReading > 852) { // 682 + 341/2
     //DEBUG_PRINTLN("Keypad::getKey3() => VK_NONE");
@@ -78,24 +80,25 @@ uint8_t KeypadChannel::getKey3(int16_t iReading)
 /** get one of VK_xxx */
 uint8_t KeypadChannel::getKey4(int16_t iReading)
 {
+  //DEBUG_PRINT("ireading 4=> "); DEBUG_PRINTDEC(iReading);DEBUG_PRINTLN("");
   // 1st option for speed reasons since it will be the most likely result
   if(iReading > 950) {
-    //DEBUG_PRINTLN("Keypad::getKey4() => VK_NONE");
+    DEBUG_PRINTLN("Keypad::getKey4() => VK_NONE");
     return VK_NONE;
   }
   if(iReading < 76) {
-    //DEBUG_PRINTLN("Keypad::getKey4() => m_vk[0]");
+    DEBUG_PRINTLN("Keypad::getKey4() => m_vk[0]");
     return m_vk[0];  
   }  
   if(iReading < 525) {
-    //DEBUG_PRINTLN("Keypad::getKey4() => m_vk[1]");
+    DEBUG_PRINTLN("Keypad::getKey4() => m_vk[1]");
     return m_vk[1];  
   }
   if(iReading < 675) {
-    //DEBUG_PRINTLN("Keypad::getKey4() => m_vk[2]");
+    DEBUG_PRINTLN("Keypad::getKey4() => m_vk[2]");
     return m_vk[2];  
   }
-  //DEBUG_PRINTLN("Keypad::getKey4() => m_vk[3]");
+  DEBUG_PRINTLN("Keypad::getKey4() => m_vk[3]");
   return m_vk[3];  
 }
 

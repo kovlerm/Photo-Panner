@@ -109,6 +109,9 @@ const uint8_t VK_SOFTB = 64;
   void onCUp() {Serial.println();Serial.println("CUp"); Serial.println(); View::g_pActiveView->onKeyUp(VK_SOFTA);};                 // Up pressed
   void onCDown() {Serial.println();Serial.println("CDown"); Serial.println(); View::g_pActiveView->onKeyUp(VK_SOFTB);};             // Down pressed
 
+  void onCZ_Up() {Serial.println();Serial.println("CZUp"); Serial.println(); View::g_pActiveView->onKeyUp(VK_SOFTAB);};                 // Up pressed
+  void onCZ_Down() {Serial.println();Serial.println("CZDown"); Serial.println(); View::g_pActiveView->onKeyDown(VK_SOFTAB);};             // Down pressed
+  
   // void onZLeft() {Serial.println();Serial.println("ZLeft"); Serial.println();};             // Left pressed
   // void onZRight() {Serial.println();Serial.println("ZRight"); Serial.println();};           // Right pressed
   // void onZUp() {Serial.println();Serial.println("ZUp"); Serial.println(); };                 // Up pressed
@@ -184,6 +187,7 @@ void setup()
   g_batteryMonitor.update(millis());
 
   g_settings.restore();
+  g_ci.getCamera()->setup();
 
   View::setup();
   View::activate(&g_controlView);
@@ -231,10 +235,11 @@ void loop()
 
  // Get wii nunchuck data
  
- delay(1);
+ //delay(1);
+ delayMicroseconds(600);
  bool bUpdateChuck = false;
  bool bUpdateDisplay = false;
-  if (i_loop==100) {
+  if (i_loop==100 || i_loop==60 || i_loop==30) {
     if (nunchuk_get_data() ) {
         // 100 is the distance from 0 on the joystick but safe to take 90 as max value
         varx = nunchuk_cjoy_x(); // nunchuk.analogX is the value of the x-axis
