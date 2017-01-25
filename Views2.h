@@ -171,6 +171,8 @@ public:
   boolean loop(unsigned long now);
   
 private:
+
+  void ProgPan();  
   float fMtrx;
   float fAngCam;
   float fAngPan;
@@ -178,6 +180,48 @@ private:
   int iStep;
   ListSpinnerWidget lwPos;     // list of focuses 
   ListSpinnerWidget lwBrk;     // list of focuses 
+};
+
+/**
+ * Panorama view class
+ * Show the 2 waypoints (corners) defined in the Control View
+ * Go to the selected waypoint.
+ * Redefined corner
+ * Calculate all middle waypoints (based on zoom) make program based on exposure
+ * 
+ 
+ 
+ */
+class TimerView : public View
+{
+  //ListSpinnerWidget m_wpoints;
+  MessageBox m_deleteConfirmation;
+  KeyValueListWidget m_timer;
+  
+public:  
+  TimerView();
+  
+  bool onKeyAutoRepeat(uint8_t vk);
+  /** analog keyboard APIs where vk is one of VK_xxx */
+  bool onKeyDown(uint8_t vk);
+  //bool onLongKeyDown(uint8_t vk);
+  bool onKeyUp(uint8_t vk);
+
+  /**
+   * redraw the view
+   */
+  void updateClient(unsigned long now);
+  /**
+   * to fill the widgets
+   */
+  void onActivate(View *pPrevActive);
+  boolean loop(unsigned long now);
+  
+private:
+
+  void ProgTimer();  
+  int iShots;
+  int iStep;
 };
 
 
