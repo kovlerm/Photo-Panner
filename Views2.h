@@ -183,15 +183,10 @@ private:
 };
 
 /**
- * Panorama view class
- * Show the 2 waypoints (corners) defined in the Control View
- * Go to the selected waypoint.
- * Redefined corner
- * Calculate all middle waypoints (based on zoom) make program based on exposure
+ * Timer view class
  * 
- 
- 
- */
+ * 
+*/
 class TimerView : public View
 {
   //ListSpinnerWidget m_wpoints;
@@ -202,15 +197,11 @@ public:
   TimerView();
   
   bool onKeyAutoRepeat(uint8_t vk);
-  /** analog keyboard APIs where vk is one of VK_xxx */
-  bool onKeyDown(uint8_t vk);
+  
   //bool onLongKeyDown(uint8_t vk);
   bool onKeyUp(uint8_t vk);
 
-  /**
-   * redraw the view
-   */
-  void updateClient(unsigned long now);
+  
   /**
    * to fill the widgets
    */
@@ -219,9 +210,45 @@ public:
   
 private:
 
-  void ProgTimer();  
-  int iShots;
-  int iStep;
+  void ProgTimer();
+  int iRestAfter=0; 
+  int iRestEnd=0;    
+  int iShots=1;
+};
+
+/**
+ * Startrack view class
+ * 
+ * 
+*/
+class StartrackView : public View
+{
+  //ListSpinnerWidget m_wpoints;
+  MessageBox m_deleteConfirmation;
+  KeyValueListWidget m_strack;
+  
+public:  
+  StartrackView();
+  
+  bool onKeyAutoRepeat(uint8_t vk);
+  
+  //bool onLongKeyDown(uint8_t vk);
+  bool onKeyUp(uint8_t vk);
+
+  
+  /**
+   * to fill the widgets
+   */
+  void onActivate(View *pPrevActive);
+  boolean loop(unsigned long now);
+  
+private:
+
+  void ProgStrack();
+  int iTimeMin=15;
+  int iTimeSec=0;  
+  int iRestEnd=0;    
+  int iShots=1;
 };
 
 

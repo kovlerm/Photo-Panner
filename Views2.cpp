@@ -20,6 +20,7 @@ ControlView g_controlView;
 WaypointsView g_waypointsView;
 PanoramaView g_panoramaView;
 TimerView g_timerView;
+StartrackView g_strackView;
 EditView g_editView;
 RunView g_runView;
 RunPView g_runPView;
@@ -72,6 +73,9 @@ static const char szBrk[] = "Bracketing";
 static const char szRestAfter[] = "Rest After";
 static const char szNumberShots[] = "Number of Shots";
 static const char szRestEnd[] = "Rest at End";
+static const char szTotalMin[] = "Total Minutes";
+static const char szTotalSec[] = "Total Seconds";
+
 
 
 
@@ -1195,10 +1199,10 @@ boolean PanoramaView::loop(unsigned long now)
 }
 
 /**
- *  WaypointsView Class Implementation
+ *  TimerView Class Implementation
  */
 TimerView::TimerView() : 
-  View("TimerView", 0, "Panorama", &AwesomeF000_16, "w[x" /* "\x7D"*/ , 0, "*track"),
+  View("TimerView", 0, "Pan", &AwesomeF000_16, "w[x" /* "\x7D"*/ , 0, "*track"),
   //m_wpoints(smSingleSelection),
   m_deleteConfirmation(szConfirmation, MB_OKCANCEL)
 {
@@ -1231,137 +1235,26 @@ bool TimerView::onKeyAutoRepeat(uint8_t vk)
   return true;
 }
 
-/**
- * analog keyboard APIs where vk is one of VK_xxx 
- */
-bool TimerView::onKeyDown(uint8_t vk)
-{
-  switch(vk) {
-    case VK_SEL: {
-      DEBUG_PRINTLN("PanoramaView::onKeyDown(VK_SEL): move the panner to this waypoint!");
-      int16_t iSel = m_wpoints.getCurSel();
-      if(LB_ERR != iSel) {
-        std::string s = m_wpoints.m_items[iSel];
-        std::string ss = s.substr(0, 1);
-        g_pPanner->moveToWayPoint(ss.c_str());
-      }
-      break;
-    }
-    default:
-      return false;
-  }
-  return true;
-}
 
 /**
  * Programming panorama 
  */
 void TimerView::ProgTimer() {
-      uint16_t u_cp=g_pCam->uBrk/2-1; 
-      DEBUG_PRINTLN("Bracketing");
-      DEBUG_PRINTDEC(g_pCam->uBrk);
-      DEBUG_PRINTLN(" ");
-      DEBUG_PRINTLN("u_cp");
-      DEBUG_PRINTDEC(u_cp);
-      DEBUG_PRINTLN(" ");       
-    
-      /**  Calculate angles     */
-  
-      // Camera view angle
-      fMtrx=36.0;
-      if (g_pCam->uMount) fMtrx=24.0;
-      fAngCam=2.0*atan(fMtrx/(2*(g_pCam->uFocus)));
-      
-      fAngCam*=180/3.1415926535897;
-      DEBUG_PRINTLN("Camera Angle");
-      DEBUG_PRINTDEC(fAngCam);
-      DEBUG_PRINTLN(" ");
-      // Panorama angle
-      fAngPan=0.36*abs(g_pPanner->m_wayPoints["A"]-g_pPanner->m_wayPoints["B"])/16.0;
-      DEBUG_PRINTLN("Panorama Angle");
-      DEBUG_PRINTDEC(fAngPan);
-      DEBUG_PRINTLN(" ");
-      // step angle
-      iShots=(fAngCam+fAngPan)/((1.0-0.3)*fAngCam)+1;
-      DEBUG_PRINTLN("Number of SHots");
-      DEBUG_PRINTDEC(iShots);
-      DEBUG_PRINTLN(" ");
-      // step delta
-      iStep=(g_pPanner->m_wayPoints["B"]-g_pPanner->m_wayPoints["A"])/iShots;
-      DEBUG_PRINTLN("Number of steps");
-      DEBUG_PRINTDEC(iStep);
-      DEBUG_PRINTLN(" ");
       // Create Program 
       int step=0;
       //test A={.m_szParam={'A'}};   Test for Union needs to be removed
-      pan_cmds[step] = (Command){chPan,     cmdSetMaxSpeed, (unsigned long)g_pPanner->getMaxSpeed(),""};
-      pan_cmds[step++] = (Command){chPan,     cmdSetAcceleration, 100,""};
-      pan_cmds[step++] = (Command){chControl, cmdControlBeginLoop, 0,""};
-      //pan_cmds[step++] = {chPan,     cmdGoToWaypoint, {.m_lPosition='A'}};                        // go to left corner
-      pan_cmds[step] = (Command){chPan,     cmdGoToWaypoint, 1,""}; pan_cmds[step].m_szParam[0]='A'; step++;    // go to left corner
-      pan_cmds[step++] = (Command){chControl, cmdControlWaitForCompletion,  50000,"To Start"};                          // wait for the movement to be completed for 50 sec
-      pan_cmds[step++] = (Command){chControl, cmdControlRest,  1000,""};                                         // deep breath before shooting
+      
+      pan_cmds[step] = (Command){chControl, cmdControlBeginLoop, 0,""};
       pan_cmds[step++] = (Command){chPan, cmdFocusOn,  0,""};
       pan_cmds[step++] = (Command){chControl, cmdControlRest,  500,""};
       pan_cmds[step++] = (Command){chPan, cmdFocusOff,  0,""};
-    
-      // loop for bracketing
-      DEBUG_PRINTLN("Bracketing loop");
-      for( int b = 0; b < g_pCam->uBrk; b = b + 1 ) {
-          DEBUG_PRINTDEC(b+1);
-          DEBUG_PRINT(" Exposure "); 
-          pan_cmds[step++] = (Command){chPan, cmdShootOn,  0};                                                   // fire
-          if (g_pCam->ulExp == 0) { // exposure managed by camera < 1 sec
-            pan_cmds[step++] = (Command){chControl, cmdControlRest, 2000,"Shooting"};                                       // very quick exposure
-            pan_cmds[step++] = (Command){chPan, cmdShootOff, 0,""};
-            pan_cmds[step++] = (Command){chControl, cmdControlRest, 500,""};                                      // wait 0.5 sec
-          }
-          else { 
-            unsigned long uCExp;
-            uint16_t myPowerOfTwo = (uint16_t) (1 << abs(b-u_cp));
-            if (b<u_cp) uCExp=g_pCam->ulExp/myPowerOfTwo;
-            else if (b==u_cp) uCExp=g_pCam->ulExp;  
-            else uCExp=g_pCam->ulExp*myPowerOfTwo;     
-            DEBUG_PRINTDEC(uCExp);
-            DEBUG_PRINTLN(" ");             
-            pan_cmds[step++] = (Command){chControl, cmdControlRest, uCExp,"Shooting"};                                // exposure
-            pan_cmds[step++] = (Command){chPan, cmdShootOff, 0,""};                                           // gun down
-            pan_cmds[step++] = (Command){chControl, cmdControlRest, 500,""};                                  // wait 0.5 sec
-          } 
-      }      
       for( int a = 0; a < iShots; a = a + 1 ) {
-        pan_cmds[step] = (Command){chPan,     cmdGo, 0,""}; pan_cmds[step].m_lPosition=(long) iStep; step++;    //go to next point of shooting
-        pan_cmds[step++] = (Command){chControl, cmdControlWaitForCompletion,  50000,"To Next"};                        // wait for the movement to be completed for 5 sec
-        pan_cmds[step++] = (Command){chControl, cmdControlRest,  1000,""};                                         // deep breath before shooting
-        pan_cmds[step++] = (Command){chPan, cmdFocusOn,  0,""};
-        pan_cmds[step++] = (Command){chControl, cmdControlRest,  500,""};
-        pan_cmds[step++] = (Command){chPan, cmdFocusOff,  0,""};
-                                      
-        // loop for bracketing
-        
-      
-        for( int b = 0; b < g_pCam->uBrk; b = b + 1 ) {
-            pan_cmds[step++] = (Command){chPan, cmdShootOn,  0,""};                                                 // fire
-        
-            if (g_pCam->ulExp == 0) { // exposure managed by camera < 1 sec
-                pan_cmds[step++] = (Command){chControl, cmdControlRest, 2000,"Shooting"};                                       // very quick exposure
-                pan_cmds[step++] = (Command){chPan, cmdShootOff, 0,""};
-                pan_cmds[step++] = (Command){chControl, cmdControlRest, 500,""};                                      // wait 2 sec
-            }
-            else { 
-                unsigned long uCExp;
-                uint16_t myPowerOfTwo = (uint16_t) (1 << abs(b-u_cp));
-                if (b<u_cp) uCExp=g_pCam->ulExp/myPowerOfTwo;
-                else if (b==u_cp) uCExp=g_pCam->ulExp;  
-                else uCExp=g_pCam->ulExp*myPowerOfTwo; 
-                                
-                pan_cmds[step++] = (Command){chControl, cmdControlRest, uCExp,"Shooting"};                                // exposure
-                pan_cmds[step++] = (Command){chPan, cmdShootOff, 0,""};                                           // gun down
-                pan_cmds[step++] = (Command){chControl, cmdControlRest, 500,""};                                  // wait 0.5 sec
-            } 
-        }                                                    // gun down  
+        pan_cmds[step++] = (Command){chPan, cmdShootOn,  0,""};                                           // fire
+        pan_cmds[step++] = (Command){chControl, cmdControlRest, g_pCam->ulExp,"Shooting"};                // exposure
+        pan_cmds[step++] = (Command){chPan, cmdShootOff, 0,""};                                           // gun down
+        pan_cmds[step++] = (Command){chControl, cmdControlRest, (long unsigned) (iRestAfter*1000+100),""};         // wait iRestAfter+0.1 sec
       };
-      pan_cmds[step++] = (Command){chControl, cmdControlRest,  1000,""}; 
+      pan_cmds[step++] = (Command){chControl, cmdControlRest, (long unsigned) (iRestEnd*1000+100),""};             // wait iRestEnd+0.1 sec
       pan_cmds[step++] = (Command){chControl, cmdControlEndLoop, 0,""};
       pan_cmds[step++] = (Command){chControl, cmdControlNone,    0,""};
       DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SEL)");
@@ -1371,18 +1264,18 @@ bool TimerView::onKeyUp(uint8_t vk)
 {
   switch(vk) {
     case VK_LEFT:
-        m_panorama.advanceSelection(-1); 
+        m_timer.advanceSelection(-1); 
         break;    
     case VK_RIGHT:
-        m_panorama.advanceSelection(1); 
+        m_timer.advanceSelection(1); 
         break;      
     case VK_DOWN: {
-        ListSpinnerWidget *p = m_panorama.getCurValue();
+        ListSpinnerWidget *p = m_timer.getCurValue();
         if(p != 0) p->advanceSelection(-1);
         break;
     }    
     case VK_UP: {
-        ListSpinnerWidget *p = m_panorama.getCurValue();
+        ListSpinnerWidget *p = m_timer.getCurValue();
         if(p != 0) p->advanceSelection(1);
         break;
     }    
@@ -1396,13 +1289,17 @@ bool TimerView::onKeyUp(uint8_t vk)
         //activate(&g_editView);
         //break;
     case VK_SOFTB:
+        DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SOFTA): switch to Control view");
+        activate(&g_strackView);
+        break;
+    
     case VK_SEL: {
-      g_pCam->uFocus = m_panorama.getNumericValue(szFocus); 
-      g_pCam->uMount= m_panorama.getValue(szPos)->getCurSel();      
-      g_pCam->ulExp=m_panorama.getNumericValue(szExposure)*1000;  
-      uint16_t u_cp=m_panorama.getValue(szBrk)->getCurSel();;
-      g_pCam->uBrk= u_cp*2+1;    
-      ProgPan();      
+      g_pCam->ulExp=m_timer.getNumericValue(szExposure)*1000;
+      iRestAfter = m_timer.getNumericValue(szRestAfter); 
+      iRestEnd = m_timer.getNumericValue(szRestEnd);       
+      iShots = m_timer.getNumericValue(szNumberShots);
+      if (iShots<1) iShots=1;
+      ProgTimer();      
       DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SEL)");
       // Run Program 
       activate(&g_runPView);
@@ -1419,13 +1316,13 @@ void TimerView::onActivate(View *pPrevActive)
   // support the default behaviour
   View::onActivate(pPrevActive);
   DEBUG_PRINTLN("TimerView::onActivate()");
-  
+  long l_exp=500/g_settings.m_uFocus;
   // clear the listBox
   m_timer.clear();
   // fill m_settings
   {
     m_timer.push_back(" ");
-    m_timer.push_back(szExposure, (long)g_settings.m_uExp); 
+    m_timer.push_back(szExposure, l_exp); 
     m_timer.push_back(szRestAfter, (long)iRestAfter);
     m_timer.push_back(szNumberShots, (long)iShots); 
     m_timer.push_back(szRestEnd, (long)iRestEnd); 
@@ -1439,8 +1336,151 @@ void TimerView::onActivate(View *pPrevActive)
  */
 boolean TimerView::loop(unsigned long now)
 {
+  return true;
+}
+
+/**
+ *  TimerView Class Implementation
+ */
+StartrackView::StartrackView() : 
+  View("TimerView", 0, "Timer", &AwesomeF000_16, "w[x" /* "\x7D"*/ , 0, "TLaps"),
+  //m_wpoints(smSingleSelection),
+  m_deleteConfirmation(szConfirmation, MB_OKCANCEL)
+{
+  m_strack.hasBorder(false);
+  addChild(&m_strack);
+}
+
+bool StartrackView::onKeyAutoRepeat(uint8_t vk)
+{
+  switch(vk) {
+    case VK_UP: {
+      DEBUG_PRINTLN("SettingsView::onKeyAutoRepeat(VK_UP)");
+      //m_settings.setCurValue(m_settings.getCurValue() + 1);
+      ListSpinnerWidget *p = m_strack.getCurValue();
+      if(p != 0)
+        p->advanceSelection(1);
+      break;
+    }
+    case VK_DOWN: {
+      DEBUG_PRINTLN("SettingsView::onKeyAutoRepeat(VK_DOWN)");
+      //m_settings.setCurValue(m_settings.getCurValue() - 1);
+      ListSpinnerWidget *p = m_strack.getCurValue();
+      if(p != 0)
+        p->advanceSelection(-1);
+      break;
+    }
+    default:
+      return false;
+  }  
+  return true;
+}
+
+
+/**
+ * Programming panorama 
+ */
+void StartrackView::ProgStrack() {
+      // Create Program 
+      int step=0;
+      //test A={.m_szParam={'A'}};   Test for Union needs to be removed
+      
+      pan_cmds[step] = (Command){chControl, cmdControlBeginLoop, 0,""};
+      pan_cmds[step++] = (Command){chPan, cmdFocusOn,  0,""};
+      pan_cmds[step++] = (Command){chControl, cmdControlRest,  500,""};
+      pan_cmds[step++] = (Command){chPan, cmdFocusOff,  0,""};
+      for( int a = 0; a < iShots; a = a + 1 ) {
+        pan_cmds[step++] = (Command){chPan, cmdShootOn,  0,""};                                           // fire
+        pan_cmds[step++] = (Command){chControl, cmdControlRest, g_pCam->ulExp,"Shooting"};                // exposure
+        pan_cmds[step++] = (Command){chPan, cmdShootOff, 0,""};                                           // gun down
+        pan_cmds[step++] = (Command){chControl, cmdControlRest, (long unsigned) (50),""};         // wait iRestAfter+0.1 sec
+      };
+      pan_cmds[step++] = (Command){chControl, cmdControlRest, (long unsigned) (iRestEnd*1000+100),""};             // wait iRestEnd+0.1 sec
+      pan_cmds[step++] = (Command){chControl, cmdControlEndLoop, 0,""};
+      pan_cmds[step++] = (Command){chControl, cmdControlNone,    0,""};
+      DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SEL)");
+};
+
+bool StartrackView::onKeyUp(uint8_t vk)
+{
+  switch(vk) {
+    case VK_LEFT:
+        m_strack.advanceSelection(-1); 
+        break;    
+    case VK_RIGHT:
+        m_strack.advanceSelection(1); 
+        break;      
+    case VK_DOWN: {
+        ListSpinnerWidget *p = m_strack.getCurValue();
+        if(p != 0) p->advanceSelection(-1);
+        break;
+    }    
+    case VK_UP: {
+        ListSpinnerWidget *p = m_strack.getCurValue();
+        if(p != 0) p->advanceSelection(1);
+        break;
+    }    
+    case VK_SOFTA:
+        DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SOFTA): switch to Control view");
+        activate(&g_waypointsView);
+        break;
+    
+        // switch to Edit view
+        //DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SOFTB): switch to Edit view");
+        //activate(&g_editView);
+        //break;
+    case VK_SOFTB:
+    case VK_SEL: {
+      g_pCam->ulExp=m_strack.getNumericValue(szExposure)*1000;
+      iTimeMin = m_strack.getNumericValue(szTotalMin); 
+      iTimeSec = m_strack.getNumericValue(szTotalSec); 
+      iRestEnd = m_strack.getNumericValue(szRestEnd);       
+      iShots = (iTimeMin*60+iTimeSec)/m_strack.getNumericValue(szExposure) + 1;
+      
+      if (iShots<1) iShots=1;
+      DEBUG_PRINT("Calculated number of shots: ");
+      DEBUG_PRINTDEC(iShots);
+      DEBUG_PRINTLN(";");
+      ProgStrack();      
+      DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SEL)");
+      // Run Program 
+      activate(&g_runPView);
+      break;
+    }  
+    default:
+      return false;
+  }
+  return true;
+}
+
+void StartrackView::onActivate(View *pPrevActive)
+{
+  // support the default behaviour
+  View::onActivate(pPrevActive);
+  DEBUG_PRINTLN("TimerView::onActivate()");
+  long l_exp=500/g_settings.m_uFocus;
+  // clear the listBox
+  m_strack.clear();
+  // fill m_settings
+  {
+    m_strack.push_back(" ");
+    m_strack.push_back(szExposure, l_exp); 
+    m_strack.push_back(szTotalMin, (long)iTimeMin);
+    m_strack.push_back(szTotalSec, (long)iTimeSec);
+    m_strack.push_back(szRestEnd, (long)iRestEnd); 
+  }
+  g_pPanner->enable(false);
   
 }
+
+/** 
+ * to be called from the main loop on the active view.  Do nothing by default. Return TRUE to update display
+ */
+boolean StartrackView::loop(unsigned long now)
+{
+  return true;
+}
+
 
 /**
  * EditView class implementation
