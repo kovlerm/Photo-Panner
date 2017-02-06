@@ -1,5 +1,5 @@
 /********************************************************
- *  Photo panner and smart timer                        *    
+ *  Photo panner and timer                        *    
  *                                                      *    
  *  By M.Kovler                                         *    
  *                                                      *    
@@ -65,8 +65,8 @@ const uint8_t VK_SOFTB = 64;
   */
 
   // void onC() {Serial.println();Serial.println("PRESSED C"); Serial.println();};            // C pressed
-  void onZ_Up() {Serial.println();Serial.println("PRESSED Z"); Serial.println(); View::g_pActiveView->onKeyUp(VK_SEL);};            // Z Unpressed
-  void onZ_Down() {Serial.println();Serial.println("PRESSED Z"); Serial.println(); View::g_pActiveView->onKeyDown(VK_SEL);};          // Z pressed
+  void onZ_Up() {Serial.println();Serial.println("PRESSED Z UP"); Serial.println(); View::g_pActiveView->onKeyUp(VK_SEL);};            // Z Unpressed
+  void onZ_Down() {Serial.println();Serial.println("PRESSED Z Down"); Serial.println(); View::g_pActiveView->onKeyDown(VK_SEL);};          // Z pressed
   // void onLongC() {Serial.println();Serial.println("PRESSED Long C"); Serial.println();};       // C Long pressed
   void onLongZ() {Serial.println();Serial.println("PRESSED Long Z"); Serial.println(); View::g_pActiveView->onLongKeyDown(VK_SEL);};       // Z Long pressed SEL Long
    

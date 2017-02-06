@@ -1,0 +1,11 @@
+Nodal Info (http://wiki.panotools.org/Entrance_Pupil_Database)
+D800 Tripod Mount length 44.5 
+
+Lens                            Focus       Pupil Length   On D800   180       140
+
+Nikkor AF 24mm f2.8D	        24mm        25mm           69.5      110.5     70.5
+Nikkor AF-S 17-35mm f2.8D ED	17mm        82.5mm         127       53        13 
+Nikkor AF-S 17-35mm f2.8D ED	35mm        78.5mm         123       57        17 
+Nikkor AF 80-200mm f2.8D ED	    80mm	    81.2mm         125.7     54.3      14.3
+Nikkor AF 80-200mm f2.8D ED	    135mm	    6mm            50.5      129.5     89.5
+Nikkor AF-S 50mm f1.8G	        50mm	    7mm            51.5      128.5     88.5 

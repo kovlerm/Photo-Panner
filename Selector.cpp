@@ -1,9 +1,11 @@
+#include "Panner.h"
 #include "Selector.h"
 
 SELECTOR::SELECTOR(){};
 
 bool SELECTOR::loop(unsigned long int ulNow, unsigned int bC, unsigned int bZ, int JoyX, int JoyY) {
     bool b_event=false;
+    
     if (!bZ && !bC) {
         // Momentary reading 
         if (JoyY>10) {
@@ -96,8 +98,7 @@ bool SELECTOR::loop(unsigned long int ulNow, unsigned int bC, unsigned int bZ, i
       tLZ=ulNow+s_iLongKeyDelay;    // first time long key timer
       fLZ=0;
     }
-    else if (!bZ && lastZ) {onZ_Up(); b_event=true;}; //unpressed
-    
+    else if (!bZ && lastZ) {DEBUG_PRINTLN("onZ_Up()"); onZ_Up(); b_event=true;}; //unpressed
     
     
     if (bRight && !lastRight) {

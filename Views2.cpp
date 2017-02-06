@@ -49,7 +49,7 @@ static Command cmds[] =
 /**
  * Globals: commands to run at startup
  */
-static Command pan_cmds[200];
+static Command pan_cmds[800];
  
 
 static const char szRest[] = "Rest";
@@ -1202,7 +1202,7 @@ boolean PanoramaView::loop(unsigned long now)
  *  TimerView Class Implementation
  */
 TimerView::TimerView() : 
-  View("TimerView", 0, "Pan", &AwesomeF000_16, "w[x" /* "\x7D"*/ , 0, "*track"),
+  View("Timer", 0, "Pan", &AwesomeF000_16, "w[x" /* "\x7D"*/ , 0, "*track"),
   //m_wpoints(smSingleSelection),
   m_deleteConfirmation(szConfirmation, MB_OKCANCEL)
 {
@@ -1340,10 +1340,10 @@ boolean TimerView::loop(unsigned long now)
 }
 
 /**
- *  TimerView Class Implementation
+ *  StartrackView Class Implementation
  */
 StartrackView::StartrackView() : 
-  View("TimerView", 0, "Timer", &AwesomeF000_16, "w[x" /* "\x7D"*/ , 0, "TLaps"),
+  View("Star Trails", 0, "Timer", &AwesomeF000_16, "w[x" /* "\x7D"*/ , 0, "TLaps"),
   //m_wpoints(smSingleSelection),
   m_deleteConfirmation(szConfirmation, MB_OKCANCEL)
 {
@@ -1386,15 +1386,20 @@ void StartrackView::ProgStrack() {
       //test A={.m_szParam={'A'}};   Test for Union needs to be removed
       
       pan_cmds[step] = (Command){chControl, cmdControlBeginLoop, 0,""};
+      
       pan_cmds[step++] = (Command){chPan, cmdFocusOn,  0,""};
       pan_cmds[step++] = (Command){chControl, cmdControlRest,  500,""};
       pan_cmds[step++] = (Command){chPan, cmdFocusOff,  0,""};
-      for( int a = 0; a < iShots; a = a + 1 ) {
+      
+      
+      for( int a = 0; a < iShots; a++) {
+        
         pan_cmds[step++] = (Command){chPan, cmdShootOn,  0,""};                                           // fire
         pan_cmds[step++] = (Command){chControl, cmdControlRest, g_pCam->ulExp,"Shooting"};                // exposure
         pan_cmds[step++] = (Command){chPan, cmdShootOff, 0,""};                                           // gun down
-        pan_cmds[step++] = (Command){chControl, cmdControlRest, (long unsigned) (50),""};         // wait iRestAfter+0.1 sec
+        pan_cmds[step++] = (Command){chControl, cmdControlRest, (long unsigned) (50),""};         // wait iRestAfter+0.1 se
       };
+
       pan_cmds[step++] = (Command){chControl, cmdControlRest, (long unsigned) (iRestEnd*1000+100),""};             // wait iRestEnd+0.1 sec
       pan_cmds[step++] = (Command){chControl, cmdControlEndLoop, 0,""};
       pan_cmds[step++] = (Command){chControl, cmdControlNone,    0,""};
@@ -1403,6 +1408,11 @@ void StartrackView::ProgStrack() {
 
 bool StartrackView::onKeyUp(uint8_t vk)
 {
+
+  DEBUG_PRINTLN("Startrack::onKeyUp");
+   DEBUG_PRINTDEC(vk);
+      DEBUG_PRINTLN(";");
+      
   switch(vk) {
     case VK_LEFT:
         m_strack.advanceSelection(-1); 
@@ -1421,29 +1431,50 @@ bool StartrackView::onKeyUp(uint8_t vk)
         break;
     }    
     case VK_SOFTA:
-        DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SOFTA): switch to Control view");
-        activate(&g_waypointsView);
+        DEBUG_PRINTLN("Startrack::onKeyUp(VK_SOFTA): switch to Timer");
+        activate(&g_timerView);
         break;
     
         // switch to Edit view
-        //DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SOFTB): switch to Edit view");
+        //DEBUG_PRINTLN("Startrack::onKeyUp(VK_SOFTB): switch to Edit view");
         //activate(&g_editView);
         //break;
     case VK_SOFTB:
+        DEBUG_PRINTLN("Startrack::onKeyUp(VK_SOFTB): switch to Timer");
+        activate(&g_timerView);
+        break;
     case VK_SEL: {
+      DEBUG_PRINTLN("Startrack::onKeyUp(Z): Execution");
+      
       g_pCam->ulExp=m_strack.getNumericValue(szExposure)*1000;
+      DEBUG_PRINT("Exposure: ");
+      DEBUG_PRINTDEC(g_pCam->ulExp);
+      DEBUG_PRINTLN(";");
       iTimeMin = m_strack.getNumericValue(szTotalMin); 
+      DEBUG_PRINT("Total minutes: ");
+      DEBUG_PRINTDEC(iTimeMin);
+      DEBUG_PRINTLN(";");
+      
       iTimeSec = m_strack.getNumericValue(szTotalSec); 
-      iRestEnd = m_strack.getNumericValue(szRestEnd);       
+      DEBUG_PRINT("Total seconds: ");
+      DEBUG_PRINTDEC(iTimeSec);
+      DEBUG_PRINTLN(";");
+      iRestEnd = m_strack.getNumericValue(szRestEnd); 
+      DEBUG_PRINT("Rest on the end: ");
+      DEBUG_PRINTDEC(iRestEnd);
+      DEBUG_PRINTLN(";");
+      
       iShots = (iTimeMin*60+iTimeSec)/m_strack.getNumericValue(szExposure) + 1;
       
       if (iShots<1) iShots=1;
       DEBUG_PRINT("Calculated number of shots: ");
       DEBUG_PRINTDEC(iShots);
       DEBUG_PRINTLN(";");
-      ProgStrack();      
-      DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SEL)");
+      
+      ProgStrack(); 
+      DEBUG_PRINTLN("Startrack::onKeyUp(VK_SEL)");
       // Run Program 
+      
       activate(&g_runPView);
       break;
     }  

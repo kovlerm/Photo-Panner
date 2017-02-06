@@ -235,6 +235,7 @@ public:
   //bool onLongKeyDown(uint8_t vk);
   bool onKeyUp(uint8_t vk);
 
+  bool onKeyDown(uint8_t vk){return true;};
   
   /**
    * to fill the widgets
