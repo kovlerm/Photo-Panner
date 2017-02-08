@@ -180,6 +180,7 @@ private:
   int iStep;
   ListSpinnerWidget lwPos;     // list of focuses 
   ListSpinnerWidget lwBrk;     // list of focuses 
+  uint16_t u_cp;
 };
 
 /**

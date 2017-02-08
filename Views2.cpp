@@ -889,7 +889,6 @@ bool PanoramaView::onKeyDown(uint8_t vk)
  * Programming panorama 
  */
 void PanoramaView::ProgPan() {
-      uint16_t u_cp=g_pCam->uBrk/2-1; 
       DEBUG_PRINTLN("Bracketing");
       DEBUG_PRINTDEC(g_pCam->uBrk);
       DEBUG_PRINTLN(" ");
@@ -944,13 +943,23 @@ void PanoramaView::ProgPan() {
           DEBUG_PRINT(" Exposure "); 
           pan_cmds[step++] = (Command){chPan, cmdShootOn,  0};                                                   // fire
           if (g_pCam->ulExp == 0) { // exposure managed by camera < 1 sec
+            DEBUG_PRINTLN("0 exposure defined ");    
             pan_cmds[step++] = (Command){chControl, cmdControlRest, 2000,"Shooting"};                                       // very quick exposure
             pan_cmds[step++] = (Command){chPan, cmdShootOff, 0,""};
             pan_cmds[step++] = (Command){chControl, cmdControlRest, 500,""};                                      // wait 0.5 sec
           }
           else { 
             unsigned long uCExp;
+            DEBUG_PRINT(" b "); 
+            DEBUG_PRINTDEC(b);
+            DEBUG_PRINTLN(" "); 
+            DEBUG_PRINT(" u_cp "); 
+            DEBUG_PRINTDEC(u_cp);
+            DEBUG_PRINTLN(" "); 
             uint16_t myPowerOfTwo = (uint16_t) (1 << abs(b-u_cp));
+            DEBUG_PRINT(" myPowerOfTwo "); 
+            DEBUG_PRINTDEC(myPowerOfTwo);
+            DEBUG_PRINTLN(" "); 
             if (b<u_cp) uCExp=g_pCam->ulExp/myPowerOfTwo;
             else if (b==u_cp) uCExp=g_pCam->ulExp;  
             else uCExp=g_pCam->ulExp*myPowerOfTwo;     
@@ -1036,7 +1045,10 @@ bool PanoramaView::onKeyUp(uint8_t vk)
       g_pCam->uFocus = m_panorama.getNumericValue(szFocus); 
       g_pCam->uMount= m_panorama.getValue(szPos)->getCurSel();      
       g_pCam->ulExp=m_panorama.getNumericValue(szExposure)*1000;  
-      uint16_t u_cp=m_panorama.getValue(szBrk)->getCurSel();;
+      DEBUG_PRINT("PanoramaView::onKeyUp(VK_SEL) u_cp");
+      DEBUG_PRINTDEC(m_panorama.getValue(szBrk)->getCurSel());
+      DEBUG_PRINTLN(" ");
+      u_cp=m_panorama.getValue(szBrk)->getCurSel();
       g_pCam->uBrk= u_cp*2+1;    
       ProgPan();      
       DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SEL)");
@@ -1870,12 +1882,16 @@ bool RunPView::onKeyUp(uint8_t vk)
   {
     case VK_SOFTA:
       g_pCam->ShootOff();
+      g_pPanner->setSpeed(0);
+      g_pPanner->enable(false);
       m_lcd.setBacklight(g_settings.m_uDisplayBacklight);
       DEBUG_PRINTLN("RunView::onKeyUp(VK_SOFTA): switch to Pause view");
       activate(&g_pausedRunView);
       break;
     case VK_SOFTB:
       g_pCam->ShootOff();
+      g_pPanner->setSpeed(0);
+      g_pPanner->enable(false);
       m_lcd.setBacklight(g_settings.m_uDisplayBacklight);
       DEBUG_PRINTLN("RunView::onKeyUp(VK_SOFTB): stop and back to Panorama");
       activate(&g_panoramaView);
