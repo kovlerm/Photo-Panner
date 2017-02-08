@@ -866,6 +866,7 @@ bool PanoramaView::onKeyAutoRepeat(uint8_t vk)
 /**
  * analog keyboard APIs where vk is one of VK_xxx 
  */
+/* 
 bool PanoramaView::onKeyDown(uint8_t vk)
 {
   switch(vk) {
@@ -884,7 +885,7 @@ bool PanoramaView::onKeyDown(uint8_t vk)
   }
   return true;
 }
-
+*/
 /**
  * Programming panorama 
  */
@@ -1882,17 +1883,30 @@ bool RunPView::onKeyUp(uint8_t vk)
   {
     case VK_SOFTA:
       g_pCam->ShootOff();
-      g_pPanner->setSpeed(0);
-      g_pPanner->enable(false);
+      g_pPanner->stop();
       m_lcd.setBacklight(g_settings.m_uDisplayBacklight);
       DEBUG_PRINTLN("RunView::onKeyUp(VK_SOFTA): switch to Pause view");
+      DEBUG_PRINT("Current position:");
+      DEBUG_PRINTDEC(g_pPanner->currentPosition());
+      DEBUG_PRINTLN(";");
+      DEBUG_PRINT("Target position:");
+      DEBUG_PRINTDEC(g_pPanner->targetPosition ());
+      DEBUG_PRINTLN(";");
       activate(&g_pausedRunView);
       break;
     case VK_SOFTB:
       g_pCam->ShootOff();
-      g_pPanner->setSpeed(0);
-      g_pPanner->enable(false);
+      DEBUG_PRINT("Target position:");
+      DEBUG_PRINTDEC(g_pPanner->targetPosition ());
+      DEBUG_PRINTLN(";");
+      g_pPanner->stop();
       m_lcd.setBacklight(g_settings.m_uDisplayBacklight);
+      DEBUG_PRINT("Current position:");
+      DEBUG_PRINTDEC(g_pPanner->currentPosition());
+      DEBUG_PRINTLN(";");
+      DEBUG_PRINT("Target position:");
+      DEBUG_PRINTDEC(g_pPanner->targetPosition ());
+      DEBUG_PRINTLN(";");
       DEBUG_PRINTLN("RunView::onKeyUp(VK_SOFTB): stop and back to Panorama");
       activate(&g_panoramaView);
       break;
