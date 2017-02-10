@@ -34,6 +34,7 @@ CommandInterpreter::CommandInterpreter(uint8_t pinStep, uint8_t pinDirection, ui
 
 void CommandInterpreter::beginRun(Command *p) 
 {
+  m_bLast = 0;
   p->DUMP("CommandInterpreter::beginRun");
   /* beginCommands for all channels.....
   for(unsigned char i = 0; i < sizeof(m_channels)/sizeof(m_channels[0]); i++)
@@ -91,6 +92,7 @@ void CommandInterpreter::lastRun()
 /** resume the run */
 void CommandInterpreter::resumeRun() 
 {
+  m_bLast = 0;
   DEBUG_PRINTLN("CommandInterpreter::resumeRun");
   if(m_ulPaused == 0)
     return;

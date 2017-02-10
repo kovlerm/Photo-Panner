@@ -866,18 +866,15 @@ bool PanoramaView::onKeyAutoRepeat(uint8_t vk)
 /**
  * analog keyboard APIs where vk is one of VK_xxx 
  */
-/* 
 bool PanoramaView::onKeyDown(uint8_t vk)
 {
   switch(vk) {
-    case VK_SEL: {
-      DEBUG_PRINTLN("PanoramaView::onKeyDown(VK_SEL): move the panner to this waypoint!");
-      int16_t iSel = m_wpoints.getCurSel();
-      if(LB_ERR != iSel) {
-        std::string s = m_wpoints.m_items[iSel];
-        std::string ss = s.substr(0, 1);
-        g_pPanner->moveToWayPoint(ss.c_str());
-      }
+    case VK_SOFTAB: {
+      DEBUG_PRINTLN("PanoramaView::onKeyDown(VK_SOFTAB (C+Z)): ");
+      g_pCam->FocusOn();
+      delay(500);
+      g_pCam->FocusOff();
+      g_pCam->ShootOn();
       break;
     }
     default:
@@ -885,7 +882,7 @@ bool PanoramaView::onKeyDown(uint8_t vk)
   }
   return true;
 }
-*/
+
 /**
  * Programming panorama 
  */
@@ -1027,16 +1024,15 @@ bool PanoramaView::onKeyUp(uint8_t vk)
         ListSpinnerWidget *p = m_panorama.getCurValue();
         if(p != 0) p->advanceSelection(1);
         break;
-    }    
+    }   
+    case VK_SOFTAB:
+        g_pCam->ShootOff();
+        break;    
     case VK_SOFTA:
         DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SOFTA): switch to Control view");
         activate(&g_waypointsView);
         break;
-    
-        // switch to Edit view
-        //DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SOFTB): switch to Edit view");
-        //activate(&g_editView);
-        //break;
+        
     case VK_SOFTB:
         DEBUG_PRINTLN("PanoramaView::onKeyUp(VK_SOFTB)");
         // Run Timer View
@@ -1884,6 +1880,7 @@ bool RunPView::onKeyUp(uint8_t vk)
     case VK_SOFTA:
       g_pCam->ShootOff();
       g_pPanner->stop();
+      g_ci.pauseRun();
       m_lcd.setBacklight(g_settings.m_uDisplayBacklight);
       DEBUG_PRINTLN("RunView::onKeyUp(VK_SOFTA): switch to Pause view");
       DEBUG_PRINT("Current position:");
@@ -1900,6 +1897,7 @@ bool RunPView::onKeyUp(uint8_t vk)
       DEBUG_PRINTDEC(g_pPanner->targetPosition ());
       DEBUG_PRINTLN(";");
       g_pPanner->stop();
+      g_ci.stopRun();
       m_lcd.setBacklight(g_settings.m_uDisplayBacklight);
       DEBUG_PRINT("Current position:");
       DEBUG_PRINTDEC(g_pPanner->currentPosition());
@@ -1911,6 +1909,7 @@ bool RunPView::onKeyUp(uint8_t vk)
       activate(&g_panoramaView);
       break;
     case VK_SEL: 
+      DEBUG_PRINTLN("LAST RUN");
       f_LastTime=1;
       g_ci.lastRun(); 
       //m_lcd.setFont(AwesomeF200_18);

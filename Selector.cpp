@@ -75,7 +75,7 @@ bool SELECTOR::loop(unsigned long int ulNow, unsigned int bC, unsigned int bZ, i
       tLCZ=ulNow+s_iLongKeyDelay;    // first time long key timer
       fLCZ=0;
     }
-    else if ((!bC || !bZ)  && lastC && lastZ) {onCZ_Up();b_event=true;} //unpressed
+    else if ((!bC || !bZ)  && lastC && lastZ) {lastC=false;  lastZ=false; onCZ_Up();b_event=true;} //unpressed
 
     
     else if (bC && !lastC) { //press down
